@@ -1,0 +1,11 @@
+identifier: fs
+description: Allow file system access
+windows: # applies on Windows
+  allow: true
+macos:
+  allow: true
+linux:
+  allow: true
+
+permissions:
+  - fs:default # basic read/write/listing

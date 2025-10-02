@@ -1,26 +1,5 @@
 const { invoke } = window.__TAURI__.core;
 
-let greetInputEl;
-let greetMsgEl;
-import { readDir, readTextFile } from "@tauri-apps/plugin-fs";
-
-// Example: list C:/
-async function listFiles() {
-  const entries = await readDir("C:/", { recursive: false });
-  console.log(entries);
-}
-
-async function greet() {
-  // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-  greetMsgEl.textContent = await invoke("greet", { name: greetInputEl.value });
-}
-window.addEventListener("DOMContentLoaded", () => {
-  document.querySelector("#load-files").addEventListener("click", () => {
-    const path = document.querySelector("#path-input").value;
-    fetchFiles(path, 50); // fetch 50 entries
-  });
-});
-
 async function fetchFiles(path, limit = null) {
   try {
     const files = await invoke("list_dir", { path, limit });
@@ -42,7 +21,9 @@ function renderFiles(files) {
     // If it's an image, display preview
     if (!file.is_dir && /\.(png|jpg|jpeg|gif)$/i.test(file.name)) {
       const img = document.createElement("img");
-      img.src = "file:///" + file.path; // works if Tauri allows fs access
+      // ⚠️ "file:///" often blocked in Tauri 2 sandbox
+      // safer approach is to read file via @tauri-apps/plugin-fs (readBinaryFile -> Blob)
+      img.src = "file:///" + file.path;
       img.style.maxWidth = "150px";
       img.style.maxHeight = "150px";
       item.appendChild(img);
@@ -52,3 +33,9 @@ function renderFiles(files) {
   });
 }
 
+window.addEventListener("DOMContentLoaded", () => {
+  document.querySelector("#load-files").addEventListener("click", () => {
+    const path = document.querySelector("#path-input").value;
+    fetchFiles(path, 50);
+  });
+});

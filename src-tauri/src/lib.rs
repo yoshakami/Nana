@@ -43,7 +43,7 @@ fn list_dir(path: String, limit: Option<usize>) -> Result<Vec<FileEntry>, String
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![list_dir])
+        .invoke_handler(tauri::generate_handler![list_dir]) // must be here
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

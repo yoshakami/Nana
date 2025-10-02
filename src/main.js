@@ -1,14 +1,16 @@
 const { invoke } = window.__TAURI__.core;
 
 async function fetchFiles(path, limit = null) {
+  console.log("fetchFiles called with:", path, limit); // DEBUG
   try {
     const files = await invoke("list_dir", { path, limit });
-    console.log("Files:", files);
+    console.log("Files from Rust:", files);
     renderFiles(files);
   } catch (err) {
     console.error("Error fetching files:", err);
   }
 }
+
 
 function renderFiles(files) {
   const container = document.querySelector("#file-list");
@@ -36,6 +38,7 @@ function renderFiles(files) {
 window.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#load-files").addEventListener("click", () => {
     const path = document.querySelector("#path-input").value;
+    console.log("Load files clicked, path =", path); // DEBUG
     fetchFiles(path, 50);
   });
 });

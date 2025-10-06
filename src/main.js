@@ -211,18 +211,38 @@ function renderFiles(files) {
     item.dataset.path = file.path;
 
     // show icon or image
-    if (file.is_dir) {
-      item.textContent = `[DIR] ${file.name}`;
-    } else {
-      item.textContent = file.name;
-      if (/\.(png|jpg|jpeg|gif)$/i.test(file.name)) {
-        const img = document.createElement("img");
-        img.src = "file:///" + file.path; // or use readBinaryFile -> Blob for Tauri 2
-        item.prepend(img);
-      }
+    const icon = document.createElement("span");
+    icon.style.marginRight = "0.5em";
+    if (file.is_dir) icon.textContent = "📁";
+    else icon.textContent = "📄";
+
+    item.append(icon, document.createTextNode(file.name));
+
+    // images
+    if (!file.is_dir && /\.(png|jpg|jpeg|gif)$/i.test(file.name)) {
+      const img = document.createElement("img");
+      img.src = "file:///" + file.path;
+      img.style.maxWidth = "50px";
+      img.style.maxHeight = "50px";
+      img.style.marginLeft = "0.5em";
+      item.appendChild(img);
     }
 
     attachSelectionHandler(item, file, idx, container);
+
+    // double-click to open directories
+    if (file.is_dir) {
+      item.addEventListener("dblclick", async (e) => {
+        e.stopPropagation();
+        clearError();
+        try {
+          await fetchFiles(file.path);
+        } catch (err) {
+          showError(`Cannot open ${file.path}: ${err}`);
+        }
+      });
+    }
+
     container.appendChild(item);
   });
 }

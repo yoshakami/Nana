@@ -1,38 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nana File Explorer</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <div id="app">
-    <!-- Sidebar (Drives / Files) -->
     <aside id="sidebar">
       <div id="toolbar">
-        <button id="back-btn">⬅</button>
-        <button id="up-btn">⬆</button>
-        <button id="refresh-btn">🔁</button>
+        <a id="back-btn">⬅</a>
+        <a id="up-btn">⬆</a>
+        <a id="refresh-btn">🔁</a>
       </div>
       <div id="favourites"></div>
-    </aside>
+      <div class="commands-header">
+        <h3>Shortcuts</h3>
+      </div>
+      <div class="commands-section">
+        <h4>Keybindings & Operations</h4>
+        <pre class="kb-block" id="kb-block">
+=   toogle this menu
+ctrl + =   toogle details & actions menu
+[Return] Parent folder
+quickly go back to favourite
+numpad 0123456789
 
-    <!-- Preview / Main View -->
+* add all selected as favourite
+launch custom script on current dir
+ctrl + 123456789
+ctrl + P   toogle preview menu
+[navigation]
+first letter/number of your file/folder/drive selects it
+TAB to cycle selection
+Shift clic to select range
+drag clic to box select
+ctrl clic to select multiple
+f5 go back to drive selection
+[enter] open last selected file/folder/drive
++ increase zoom
+- decrease zoom
+&lt; toogle window split in two paths
+
+[operations]
+/ cut selection
+$ copy selection
+: hardlink/ntfs Junction selection
+, symlink selection
+! paste
+
+; add read-only for selection
+. remove read-only for selection
+
+ctrl + A select all / deselect all
+ctrl + C copy
+ctrl + D add favourite
+ctrl + F search
+ctrl + L edit dir path manually
+ctrl + N new tab in current dir
+
+ctrl + V paste
+ctrl + X cut
+ctrl + Y redo
+ctrl + Z undo
+ctrl + E edit
+[delete] move file to bin
+ctrl + R rename
+F2 rename
+ctrl + Tab cycle view mode
+ctrl + S cycle sorting mode
+        </pre>
+      </div>
+    </aside>
     <main id="main">
       <div id="preview">
         <div id="file-list"></div>
       </div>
     </main>
-
     <!-- RIGHT column: details + commands (replace existing right-column) -->
-    <aside class="right-column" id="right-column">
+    <aside class="right-column">
       <div class="right-controls">
-        <button id="toggle-details" class="small-toggle">Details</button>
-        <button id="toggle-commands" class="small-toggle">Commands</button>
+        <a id="toggle-dark" class="small-toggle">Dark</a>
+        <a id="toggle-details" class="small-toggle">Details & Actions</a>
+        <a id="toggle-shortcuts" class="small-toggle">Shortcuts</a>
       </div>
-    
-      <!-- DETAILS PANE -->
       <div id="details-pane" class="right-pane details-pane">
         <div class="details-header">
           <h3>Details</h3>
@@ -41,24 +95,22 @@
           <div class="detail-avatar" id="detail-avatar">💽</div>
           <div class="detail-meta">
             <div class="detail-title" id="detail-title">Select a drive or item</div>
-    
             <div class="detail-progress">
               <div class="progress-bar">
                 <div class="progress-fill" id="detail-fill" style="width:0%"></div>
               </div>
             </div>
-    
             <div class="detail-stats" id="detail-stats">—</div>
             <div class="detail-fs" id="detail-fs">File system: —</div>
-    
-            <!-- small "icons / view" group like the mockup -->
+          </div>
+        </div>
+        <div id="splitted">
+          <div id="options">
             <div class="details-controls">
-              <button class="tiny">icons</button>
-              <button class="tiny">Details</button>
-              <button class="tiny">Compact List</button>
+              <a id="icons">💟icons</a>
+              <a id="details">📊Details</a>
+              <a id="compact">📕Compact List</a>
             </div>
-    
-            <!-- small options (checkboxes) as in mockup -->
             <div class="details-options">
               <label><input type="checkbox" id="opt-hidden"> Hidden items</label>
               <label><input type="checkbox" id="opt-checkboxes"> Item check boxes</label>
@@ -66,108 +118,62 @@
               <label><input type="checkbox" id="opt-songlen"> Get song Length</label>
               <label><input type="checkbox" id="opt-imgwh"> Get Image w × h</label>
             </div>
+            <div class="commands-section">
+              <h4>Sorting</h4>
+              <div class="list">
+                <label><input type="radio" name="sort" value="name" checked>🅰 name</label>
+                <label><input type="radio" name="sort" value="type">📚 type</label>
+                <label><input type="radio" name="sort" value="size">💾 size</label>
+                <label><input type="radio" name="sort" value="date-modified">📆 date modified</label>
+                <label><input type="radio" name="sort" value="date-added">📅 date added</label>
+                <label><input type="radio" name="sort" value="pic-width">↔ picture width</label>
+                <label><input type="radio" name="sort" value="pic-height">↕ picture height</label>
+                <label><input type="radio" name="sort" value="song-length">🎵 song length</label>
+              </div>
+            </div>
+            <h4>Display</h4>
+            <div class="list">
+              <label><input type="radio" name="show" value="name-only"> Show only name</label>
+              <label><input type="radio" name="show" value="previews"> Show Previews</label>
+              <label><input type="radio" name="show" value="fullpics"> SHOW FULL PICS I LOVE USING RAM</label>
+            </div>
           </div>
-        </div>
-      </div>
-    
-      <!-- COMMANDS PANE -->
-      <div id="commands-pane" class="right-pane commands-pane hidden">
-        <div class="commands-header">
-          <h3>Commands & Shortcuts</h3>
-        </div>
-    
-        <!-- Top row: the 8 static command buttons you asked for -->
-        <div class="commands-actions">
-          <button class="cmd-action-btn" data-cmd="name">🅰 name</button>
-          <button class="cmd-action-btn" data-cmd="type">📚 type</button>
-          <button class="cmd-action-btn" data-cmd="size">💾 size</button>
-          <button class="cmd-action-btn" data-cmd="modified">📆 date modified</button>
-          <button class="cmd-action-btn" data-cmd="added">📅 date added</button>
-          <button class="cmd-action-btn" data-cmd="width">↔ picture width</button>
-          <button class="cmd-action-btn" data-cmd="height">↕ picture height</button>
-          <button class="cmd-action-btn" data-cmd="length">🎵 song length</button>
-        </div>
-    
-        <!-- Sorting options / view controls as in mockup -->
-        <div class="commands-section">
-          <h4>Sorting</h4>
-          <div class="sort-list">
-            <label><input type="radio" name="sort" value="name" checked> name</label>
-            <label><input type="radio" name="sort" value="type"> type</label>
-            <label><input type="radio" name="sort" value="size"> size</label>
-            <label><input type="radio" name="sort" value="date-modified"> date modified</label>
-            <label><input type="radio" name="sort" value="date-added"> date added</label>
-            <label><input type="radio" name="sort" value="pic-width"> picture width</label>
-            <label><input type="radio" name="sort" value="pic-height"> picture height</label>
-            <label><input type="radio" name="sort" value="song-length"> song length</label>
+          <div id="actions">
+            <a id="copy">📝Copy</a>
+            <a id="cut">✂ Cut</a>
+            <a id="paste">📋 Paste</a>
+            <a id="symlink">📎 Symlink</a>
+            <a id="hardlink">📍 Hardlink</a>
+            <a id="copy-path">📏 Copy path</a>
+            <a id="add-favourite">📌 Add favourite</a>
+            <a id="read-only">✅ Add read-only</a>
+            <a id="read-write">❎ Rm read-only</a>
+            <a id="new-folder">📁 New folder</a>
+            <a id="new-file">📃 New file</a>
+            <a id="move-to-bin">🗑 Move to bin</a>
+            <a id="delete-forever">❌ Delete forever</a>
+            <a id="select-all">📰 Select All</a>
+            <a id="select-none">📰 Select None</a>
+            <a id="invert-selection">📰 Invert selection</a>
+            <a id="open">📖 Open</a>
+            <a id="edit">📕 Edit</a>
+            <a id="history">📚 History</a>
+            <a id="script-1">📰 Script 1</a>
+            <a id="script-2">📰 Script 2</a>
+            <a id="script-3">📰 Script 3</a>
+            <a id="script-4">📰 Script 4</a>
+            <a id="script-5">📰 Script 5</a>
+            <a id="script-6">📰 Script 6</a>
+            <a id="script-7">📰 Script 7</a>
+            <a id="script-8">📰 Script 8</a>
+            <a id="script-9">📰 Script 9</a>
+            <a id="edit-config-file">📰 Edit config file</a>
           </div>
-        </div>
-    
-        <div class="commands-section">
-          <h4>Display</h4>
-          <label><input type="checkbox" id="display-name-only"> Show only name</label>
-          <label><input type="checkbox" id="display-previews"> Show Previews</label>
-          <label><input type="checkbox" id="display-fullpics"> SHOW FULL PICS I LOVE USING RAM</label>
-        </div>
-    
-        <!-- EXACT large keybinding text block copied from your mockup (keeps layout & scroll) -->
-        <div class="commands-section">
-          <h4>Keybindings & Operations</h4>
-          <pre class="kb-block" id="kb-block">
-    =   toogle this menu
-    ctrl + =   toogle details & actions menu
-    [Return] Parent folder
-    quickly go back to favourite
-    numpad 0123456789
-    
-    * add all selected as favourite
-    launch custom script on current dir
-    ctrl + 123456789
-    ctrl + P   toogle preview menu
-    [navigation]
-    first letter/number of your file/folder/drive selects it
-    TAB to cycle selection
-    Shift clic to select range
-    drag clic to box select
-    ctrl clic to select multiple
-    f5 go back to drive selection
-    [enter] open last selected file/folder/drive
-    + increase zoom
-    - decrease zoom
-    &lt; toogle window split in two paths
-    
-    [operations]
-    / cut selection
-    $ copy selection
-    : hardlink/ntfs Junction selection
-    , symlink selection
-    ! paste
-    
-    ; add read-only for selection
-    . remove read-only for selection
-    
-    ctrl + A select all / deselect all
-    ctrl + C copy
-    ctrl + D add favourite
-    ctrl + F search
-    ctrl + L edit dir path manually
-    ctrl + N new tab in current dir
-    
-    ctrl + V paste
-    ctrl + X cut
-    ctrl + Y redo
-    ctrl + Z undo
-    ctrl + E edit
-    [delete] move file to bin
-    ctrl + R rename
-    F2 rename
-    ctrl + Tab cycle view mode
-    ctrl + S scyware
-          </pre>
         </div>
       </div>
     </aside>
   </div>
   <script src="main.js"></script>
 </body>
+
 </html>

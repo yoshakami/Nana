@@ -335,7 +335,7 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("toggle-details").addEventListener("click", () => {
     document.getElementById("details-pane").classList.toggle("hidden");
   });
-  document.getElementById("toggle-commands").addEventListener("click", () => {
+  document.getElementById("toggle-shortcuts").addEventListener("click", () => {
     document.getElementById("commands-pane").classList.toggle("hidden");
   });
 
@@ -352,9 +352,8 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("commands-pane").classList.remove("active");
   });*/
 
-  document.getElementById("toggle-commands").addEventListener("click", () => {
+  document.getElementById("toggle-shortcuts").addEventListener("click", () => {
     document.getElementById("commands-pane").classList.toggle("active");
-    document.getElementById("properties-pane").classList.remove("active");
   });
 
   // Handle command clicks

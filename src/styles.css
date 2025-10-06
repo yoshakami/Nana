@@ -148,9 +148,19 @@ body {
   align-items: flex-start;
 }
 
+#splitted {
+  display: flex;
+}
+#actions {
+  display: flex;
+  flex-direction: column;
+  min-width: fit-content;
+}
+
 .details-controls {
   margin-top: 8px;
   display: flex;
+  flex-direction: column;
   gap: 6px;
 }
 
@@ -202,13 +212,13 @@ body {
   color: var(--muted, #bbb);
   font-size: 13px;
 }
-.sort-list {
+.list {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-top: 6px;
 }
-.sort-list label {
+.list label {
   display: flex;
   gap: 8px;
   align-items: center;

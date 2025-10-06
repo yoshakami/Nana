@@ -1,58 +1,143 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="stylesheet" href="styles.css" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Nana File Manager</title>
+    <link rel="stylesheet" href="styles.css" />
     <script type="module" src="/main.js" defer></script>
   </head>
-
   <body>
-    <main class="container">
-      <h1>Nana File Manager</h1>
+    <div class="app">
+      <aside class="sidebar">
+        <header class="sidebar-head">
+          <h1 class="app-title">Nana</h1>
+        </header>
 
-      <section class="file-browser card">
-        <h2>📂 File Browser</h2>
-        <div id="file-list" class="file-container"></div>
-        <div class="inline">
-          <input id="path-input" placeholder="Enter a path, e.g. C:\\" />
-          <button id="load-files">Load Files</button>
-        </div>
-        <div id="file-list" class="file-list"></div>
-      </section>
+        <nav class="favorites" aria-label="favorites">
+          <ul>
+            <li><span class="icon">🎵</span> Music</li>
+            <li><span class="icon">🖼️</span> Pictures</li>
+            <li><span class="icon">🎬</span> Videos</li>
+            <li><span class="icon">💽</span> Local Disk (D:)</li>
+            <li><span class="icon">💽</span> Local Disk (H:)</li>
+          </ul>
+        </nav>
 
-      <section class="operations card">
-        <h2>⚙️ File Operations</h2>
+        <footer class="sidebar-foot">
+          <small>Tip: Ctrl + click to select multiple</small>
+        </footer>
+      </aside>
 
-        <div class="op-group">
-          <h3>Copy / Move / Hardlink / Symlink / Junction</h3>
-          <input id="src" placeholder="Source path" />
-          <input id="dst" placeholder="Destination path" />
-          <div class="button-row">
-            <button data-action="copyFile" data-args="C:/source.jpg,C:/dest.jpg">Copy File</button>
-            <button data-action="makeHardlink" data-args="C:/source.jpg,C:/link.jpg">Hardlink</button>
-            <button data-action="moveFile" data-args="C:/source.jpg,C:/new_dest.jpg">Move File</button>
-            <button data-action="createSymlink" data-args="C:/target,C:/link">Symlink</button>
-            <button data-action="createJunction" data-args="C:/target,C:/link">Junction</button>
+      <main class="main">
+        <div class="topbar">
+          <input id="search" class="search" placeholder="Search This PC" />
+          <div class="top-actions">
+            <button id="refresh" class="btn-ghost" title="Refresh">⟳</button>
+            <button id="toggle-right" class="btn-ghost" title="Toggle side panels">▤</button>
           </div>
         </div>
 
-        <div class="op-group">
-          <h3>Delete</h3>
-          <input id="delete-path" placeholder="Path to delete" />
-          <button data-action="deleteFile" data-args="C:/dest.jpg">Delete File</button>
+        <section class="drives-section">
+          <div id="drive-list" class="drive-list" aria-live="polite"></div>
+        </section>
+
+        <section class="files-section card">
+          <h2 class="section-title">Files</h2>
+          <div id="file-list" class="file-grid" role="list"></div>
+        </section>
+      </main>
+
+      <!-- RIGHT column: two stacked panels (Details on top, Actions/Shortcuts below) -->
+      <aside class="right-column" id="right-column">
+        <div class="right-controls">
+          <button id="toggle-details" class="small-toggle">Details</button>
+          <button id="toggle-actions" class="small-toggle">Actions</button>
         </div>
 
-        <div class="op-group">
-          <h3>Read-only Attribute</h3>
-          <input id="ro-path" placeholder="Path" />
-          <div class="button-row">
-            <button data-action="setReadonly" data-args="C:/new_dest.jpg,true">Set Readonly</button>
-            <button data-action="setReadonly" data-args="C:/new_dest.jpg,false">UnSet Readonly</button>
+        <div id="details-pane" class="right-pane details-pane">
+          <div class="details-header">
+            <h3>Details</h3>
+          </div>
+          <div class="details-body" id="details-body">
+            <!-- populated by JS -->
+            <div class="detail-avatar" id="detail-avatar">💽</div>
+            <div class="detail-meta">
+              <div class="detail-title" id="detail-title">Select a drive or item</div>
+              <div class="detail-progress">
+                <div class="progress-bar"><div class="progress-fill" id="detail-fill" style="width:0%"></div></div>
+              </div>
+              <div class="detail-stats" id="detail-stats">—</div>
+              <div class="detail-fs" id="detail-fs">File system: —</div>
+            </div>
           </div>
         </div>
-      </section>
-    </main>
+
+        <div id="actions-pane" class="right-pane actions-pane">
+          <div class="actions-header">
+            <h3>Operations & Shortcuts</h3>
+          </div>
+          <div class="actions-body">
+            <!-- LARGE text block taken from mockup – presented as two columns for readability -->
+            <div class="actions-columns">
+              <pre class="shortcuts">
+=   toogle this menu
+ctrl + =   toogle details & actions menu
+[Return] Parent folder
+quickly go back to favourite
+numpad 0123456789
+
+* add all selected as favourite
+launch custom script on current dir
+ctrl + 123456789
+ctrl + P   toogle preview menu
+
+[navigation]
+first letter/number of your file/folder/drive selects it
+TAB to cycle selection
+Shift clic to select range
+drag clic to box select
+ctrl clic to select multiple
+f5 go back to drive selection
+[enter] open last selected file/folder/drive
++ increase zoom
+- decrease zoom
+&lt; toogle window split in two paths
+            </pre>
+
+              <pre class="shortcuts">
+[operations]
+/ cut selection
+$ copy selection
+: hardlink/ntfs Junction selection
+, symlink selection
+! paste
+
+; add read-only for selection
+. remove read-only for selection
+
+ctrl + A select all / deselect all
+ctrl + C copy
+ctrl + D add favourite
+ctrl + F search
+ctrl + L edit dir path manually
+ctrl + N new tab in current dir
+
+ctrl + V paste
+ctrl + X cut
+ctrl + Y redo
+ctrl + Z undo
+ctrl + E edit
+[delete] move file to bin
+ctrl + R rename
+F2 rename
+ctrl + Tab cycle view mode
+ctrl + S scyware
+              </pre>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
   </body>
 </html>

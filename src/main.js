@@ -10,16 +10,91 @@ async function fetchFiles(path, limit = null) {
     console.error("Error fetching files:", err);
   }
 }
+function attachSelectionHandler(item, fileOrDrive, index, container) {
+  item.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    const items = Array.from(container.querySelectorAll(".file-item"));
+
+    // SHIFT + click (range selection)
+    if (e.shiftKey && lastSelectedIndex !== null) {
+      const [start, end] = [lastSelectedIndex, index].sort((a, b) => a - b);
+      items.forEach((el, i) => {
+        if (i >= start && i <= end) el.classList.add("selected");
+        else el.classList.remove("selected");
+      });
+      selectedFiles = items
+        .filter((el) => el.classList.contains("selected"))
+        .map((el) => el.dataset.name);
+    }
+
+    // CTRL or CMD toggle
+    else if (e.ctrlKey || e.metaKey) {
+      const alreadySelected = item.classList.contains("selected");
+      item.classList.toggle("selected");
+      if (alreadySelected) {
+        selectedFiles = selectedFiles.filter((n) => n !== fileOrDrive.name);
+      } else {
+        selectedFiles.push(fileOrDrive.name);
+      }
+      lastSelectedIndex = index;
+    }
+
+    // single select
+    else {
+      items.forEach((el) => el.classList.remove("selected"));
+      item.classList.add("selected");
+      selectedFiles = [fileOrDrive.name];
+      lastSelectedIndex = index;
+    }
+
+    console.log("Selected:", selectedFiles);
+  });
+}
 
 async function listDrives() {
-  console.log("listDrives called"); // DEBUG
+  console.log("listDrives called");
   try {
     const drives = await invoke("list_drives");
-    console.log("Files from Rust:", drives);
-    renderFiles(drives);
+    const driveEntries = drives.map((path) => ({
+      name: path.replace(/\\$/, ""), // remove trailing \
+      is_dir: true,
+      path,
+      free: Math.random() * 0.8 + 0.2, // mock 20–100% free
+    }));
+    renderDrives(driveEntries);
   } catch (err) {
-    console.error("Error fetching files:", err);
+    console.error("Error fetching drives:", err);
   }
+}function renderDrives(drives) {
+  const container = document.querySelector("#file-list");
+  container.innerHTML = "";
+
+  drives.forEach((drive, idx) => {
+    const item = document.createElement("div");
+    item.classList.add("file-item");
+    item.dataset.index = idx;
+    item.dataset.name = drive.name;
+
+    const icon = document.createElement("span");
+    icon.textContent = "💽";
+    icon.style.fontSize = "2em";
+
+    const name = document.createElement("div");
+    name.textContent = drive.name;
+    name.style.fontWeight = "bold";
+
+    const bar = document.createElement("div");
+    bar.classList.add("drive-bar");
+    bar.innerHTML = `<div class="fill" style="width:${drive.free * 100}%;"></div>`;
+
+    item.append(icon, name, bar);
+
+    // 🟢 Add this
+    attachSelectionHandler(item, drive, idx, container);
+
+    container.appendChild(item);
+  });
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -125,38 +200,7 @@ function renderFiles(files) {
     }
 
     // click logic
-    item.addEventListener("click", (e) => {
-      const index = parseInt(item.dataset.index);
-
-      if (e.shiftKey && lastSelectedIndex !== null) {
-        // select range
-        const [start, end] = [lastSelectedIndex, index].sort((a, b) => a - b);
-        for (let i = start; i <= end; i++) {
-          const el = container.querySelector(`.file-item[data-index='${i}']`);
-          if (!selectedFiles.includes(el.dataset.name)) selectedFiles.push(el.dataset.name);
-          el.classList.add("selected");
-        }
-      } else if (e.ctrlKey || e.metaKey) {
-        // toggle select
-        if (selectedFiles.includes(file.name)) {
-          selectedFiles = selectedFiles.filter(n => n !== file.name);
-          item.classList.remove("selected");
-        } else {
-          selectedFiles.push(file.name);
-          item.classList.add("selected");
-        }
-        lastSelectedIndex = index;
-      } else {
-        // single select
-        container.querySelectorAll(".file-item.selected").forEach(el => el.classList.remove("selected"));
-        selectedFiles = [file.name];
-        item.classList.add("selected");
-        lastSelectedIndex = index;
-      }
-
-      console.log("Selected files:", selectedFiles);
-    });
-
+    attachSelectionHandler(item, file, idx, container);
     container.appendChild(item);
   });
 }

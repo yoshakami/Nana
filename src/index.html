@@ -1,58 +1,51 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="stylesheet" href="styles.css" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Nana File Manager</title>
+    <link rel="stylesheet" href="styles.css" />
     <script type="module" src="/main.js" defer></script>
   </head>
-
   <body>
-    <main class="container">
-      <h1>Nana File Manager</h1>
+    <div class="app">
+      <aside class="sidebar">
+        <header class="sidebar-head">
+          <h1 class="app-title">Nana</h1>
+        </header>
 
-      <section class="file-browser card">
-        <h2>📂 File Browser</h2>
-        <div id="file-list" class="file-container"></div>
-        <div class="inline">
-          <input id="path-input" placeholder="Enter a path, e.g. C:\\" />
-          <button id="load-files">Load Files</button>
-        </div>
-        <div id="file-list" class="file-list"></div>
-      </section>
+        <nav class="favorites">
+          <ul>
+            <li><span class="icon">🎵</span> Music</li>
+            <li><span class="icon">🖼️</span> Pictures</li>
+            <li><span class="icon">🎬</span> Videos</li>
+            <li><span class="icon">💽</span> Local Disk (D:)</li>
+            <li><span class="icon">💽</span> Local Disk (H:)</li>
+          </ul>
+        </nav>
 
-      <section class="operations card">
-        <h2>⚙️ File Operations</h2>
-
-        <div class="op-group">
-          <h3>Copy / Move / Hardlink / Symlink / Junction</h3>
-          <input id="src" placeholder="Source path" />
-          <input id="dst" placeholder="Destination path" />
-          <div class="button-row">
-            <button data-action="copyFile" data-args="C:/source.jpg,C:/dest.jpg">Copy File</button>
-            <button data-action="makeHardlink" data-args="C:/source.jpg,C:/link.jpg">Hardlink</button>
-            <button data-action="moveFile" data-args="C:/source.jpg,C:/new_dest.jpg">Move File</button>
-            <button data-action="createSymlink" data-args="C:/target,C:/link">Symlink</button>
-            <button data-action="createJunction" data-args="C:/target,C:/link">Junction</button>
+        <footer class="sidebar-foot">
+          <div class="help">
+            <small>Tip: Ctrl + click to select multiple</small>
           </div>
+        </footer>
+      </aside>
+
+      <main class="main">
+        <div class="topbar">
+          <input id="search" class="search" placeholder="Search This PC" />
+          <button id="refresh" class="btn-ghost" title="Refresh">⟳</button>
         </div>
 
-        <div class="op-group">
-          <h3>Delete</h3>
-          <input id="delete-path" placeholder="Path to delete" />
-          <button data-action="deleteFile" data-args="C:/dest.jpg">Delete File</button>
-        </div>
+        <section class="drives-section">
+          <div id="drive-list" class="drive-list" aria-live="polite"></div>
+        </section>
 
-        <div class="op-group">
-          <h3>Read-only Attribute</h3>
-          <input id="ro-path" placeholder="Path" />
-          <div class="button-row">
-            <button data-action="setReadonly" data-args="C:/new_dest.jpg,true">Set Readonly</button>
-            <button data-action="setReadonly" data-args="C:/new_dest.jpg,false">UnSet Readonly</button>
-          </div>
-        </div>
-      </section>
-    </main>
+        <section class="files-section card">
+          <h2 class="section-title">Files</h2>
+          <div id="file-list" class="file-grid" role="list"></div>
+        </section>
+      </main>
+    </div>
   </body>
 </html>

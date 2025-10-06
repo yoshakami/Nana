@@ -42,7 +42,6 @@ window.addEventListener("DOMContentLoaded", () => {
     fetchFiles(path, 50);
   });
 });
-import { invoke } from "@tauri-apps/api/tauri"; // or window.__TAURI__.core.invoke depending on setup
 
 async function copyFile(src, dst) {
   const res = await invoke("copy_path", { src, dst, overwrite: true });

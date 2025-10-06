@@ -3,7 +3,44 @@ use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use tauri::Manager;
+//use tauri::Manager;
+
+#[derive(Serialize)]
+struct FileEntry {
+    name: String,
+    is_dir: bool,
+    path: String,
+}
+
+#[tauri::command]
+fn list_dir(path: String, limit: Option<usize>) -> Result<Vec<FileEntry>, String> {
+    let mut entries = Vec::new();
+    let dir = PathBuf::from(path);
+
+    if !dir.exists() {
+        return Err("Path does not exist".into());
+    }
+
+    let read_dir = fs::read_dir(&dir).map_err(|e| e.to_string())?;
+    for (i, entry) in read_dir.enumerate() {
+        if let Ok(entry) = entry {
+            let metadata = entry.metadata().map_err(|e| e.to_string())?;
+            entries.push(FileEntry {
+                name: entry.file_name().to_string_lossy().to_string(),
+                is_dir: metadata.is_dir(),
+                path: entry.path().to_string_lossy().to_string(),
+            });
+
+            if let Some(max) = limit {
+                if i + 1 >= max {
+                    break;
+                }
+            }
+        }
+    }
+
+    Ok(entries)
+}
 
 #[derive(Serialize)]
 pub struct OpResult {
@@ -195,7 +232,7 @@ fn create_ntfs_junction(target: String, link: String) -> Result<OpResult, String
 
   #[cfg(target_family = "windows")]
   {
-    use std::os::windows::prelude::*;
+    //use std::os::windows::prelude::*;
     // Create target parent dir for link if needed
     let link_path = PathBuf::from(&link);
     if let Some(parent) = link_path.parent() {

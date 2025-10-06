@@ -66,7 +66,8 @@ async function listDrives() {
   } catch (err) {
     console.error("Error fetching drives:", err);
   }
-}function renderDrives(drives) {
+}
+function renderDrives(drives) {
   const container = document.querySelector("#file-list");
   container.innerHTML = "";
 
@@ -75,6 +76,7 @@ async function listDrives() {
     item.classList.add("file-item");
     item.dataset.index = idx;
     item.dataset.name = drive.name;
+    item.dataset.path = drive.path; // so we can open it later
 
     const icon = document.createElement("span");
     icon.textContent = "💽";
@@ -90,12 +92,20 @@ async function listDrives() {
 
     item.append(icon, name, bar);
 
-    // 🟢 Add this
+    // 🟢 Add selection logic (click)
     attachSelectionHandler(item, drive, idx, container);
+
+    // 🟣 Add double-click logic (open drive)
+    item.addEventListener("dblclick", async (e) => {
+      e.stopPropagation();
+      console.log("Double-clicked:", drive.path);
+      await fetchFiles(drive.path);
+    });
 
     container.appendChild(item);
   });
 }
+
 
 window.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#load-files").addEventListener("click", () => {

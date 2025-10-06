@@ -42,3 +42,39 @@ window.addEventListener("DOMContentLoaded", () => {
     fetchFiles(path, 50);
   });
 });
+import { invoke } from "@tauri-apps/api/tauri"; // or window.__TAURI__.core.invoke depending on setup
+
+async function copyFile(src, dst) {
+  const res = await invoke("copy_path", { src, dst, overwrite: true });
+  console.log(res);
+}
+
+async function deleteFile(path) {
+  const res = await invoke("delete_path", { path });
+  console.log(res);
+}
+
+async function makeHardlink(src, dst) {
+  const res = await invoke("create_hardlink", { src, dst });
+  console.log(res);
+}
+
+async function moveFile(src, dst) {
+  const res = await invoke("move_path", { src, dst, overwrite: true });
+  console.log(res);
+}
+
+async function setReadonly(path, ro) {
+  const res = await invoke("set_readonly", { path, readonly: ro });
+  console.log(res);
+}
+
+async function createSymlink(target, link) {
+  const res = await invoke("create_symlink", { src: target, link });
+  console.log(res);
+}
+
+async function createJunction(target, link) {
+  const res = await invoke("create_ntfs_junction", { target, link });
+  console.log(res);
+}

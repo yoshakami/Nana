@@ -1,22 +1,23 @@
 const { invoke } = window.__TAURI__.core;
 
 async function fetchFiles(path, limit = null) {
-  console.log("fetchFiles called with:", path, limit); // DEBUG
+  clearError();
+  console.log("fetchFiles called with:", path, limit);
   try {
     const files = await invoke("list_dir", { path, limit });
-    console.log("Files from Rust:", files);
     renderFiles(files);
   } catch (err) {
-    console.error("Error fetching files:", err);
+    showError(`Error fetching files: ${err}`);
+    console.error(err);
   }
 }
+
 function attachSelectionHandler(item, fileOrDrive, index, container) {
   item.addEventListener("click", (e) => {
     e.stopPropagation();
 
     const items = Array.from(container.querySelectorAll(".file-item"));
 
-    // SHIFT + click (range selection)
     if (e.shiftKey && lastSelectedIndex !== null) {
       const [start, end] = [lastSelectedIndex, index].sort((a, b) => a - b);
       items.forEach((el, i) => {
@@ -26,10 +27,7 @@ function attachSelectionHandler(item, fileOrDrive, index, container) {
       selectedFiles = items
         .filter((el) => el.classList.contains("selected"))
         .map((el) => el.dataset.name);
-    }
-
-    // CTRL or CMD toggle
-    else if (e.ctrlKey || e.metaKey) {
+    } else if (e.ctrlKey || e.metaKey) {
       const alreadySelected = item.classList.contains("selected");
       item.classList.toggle("selected");
       if (alreadySelected) {
@@ -38,37 +36,32 @@ function attachSelectionHandler(item, fileOrDrive, index, container) {
         selectedFiles.push(fileOrDrive.name);
       }
       lastSelectedIndex = index;
-    }
-
-    // single select
-    else {
+    } else {
       items.forEach((el) => el.classList.remove("selected"));
       item.classList.add("selected");
       selectedFiles = [fileOrDrive.name];
       lastSelectedIndex = index;
     }
-
-    console.log("Selected:", selectedFiles);
   });
 }
 
 async function listDrives() {
-  console.log("listDrives called");
+  clearError();
   try {
     const drives = await invoke("list_drives");
     const driveEntries = drives.map((path) => ({
-      name: path.replace(/\\$/, ""), // remove trailing \
+      name: path.replace(/\\$/, ""),
       is_dir: true,
       path,
-      free: Math.random() * 0.8 + 0.2, // mock 20–100% free
+      free: Math.random() * 0.8 + 0.2,
     }));
     renderDrives(driveEntries);
   } catch (err) {
-    console.error("Error fetching drives:", err);
+    showError(`Error fetching drives: ${err}`);
+    console.error(err);
   }
 }
 function renderDrives(drives) {
-  const container = document.querySelector("#file-list");
   container.innerHTML = "";
 
   drives.forEach((drive, idx) => {
@@ -186,9 +179,28 @@ document.querySelectorAll("button[data-action]").forEach((btn) => {
 });
 let selectedFiles = [];
 let lastSelectedIndex = null;
+let container;
+// Utility to show errors
+function showError(msg) {
+  let errDiv = document.querySelector("#error-message");
+  if (!errDiv) {
+    errDiv = document.createElement("div");
+    errDiv.id = "error-message";
+    errDiv.style.color = "red";
+    errDiv.style.margin = "0.5em 0";
+    container.parentElement.prepend(errDiv);
+  }
+  errDiv.textContent = msg;
+}
+
+// Clear previous error
+function clearError() {
+  const errDiv = document.querySelector("#error-message");
+  if (errDiv) errDiv.textContent = "";
+}
+
 
 function renderFiles(files) {
-  const container = document.querySelector("#file-list");
   container.innerHTML = "";
 
   files.forEach((file, idx) => {
@@ -196,6 +208,7 @@ function renderFiles(files) {
     item.classList.add("file-item");
     item.dataset.index = idx;
     item.dataset.name = file.name;
+    item.dataset.path = file.path;
 
     // show icon or image
     if (file.is_dir) {
@@ -209,13 +222,13 @@ function renderFiles(files) {
       }
     }
 
-    // click logic
     attachSelectionHandler(item, file, idx, container);
     container.appendChild(item);
   });
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  container = document.querySelector("#file-list");
   listDrives(); // automatically list drives on load
 });
 

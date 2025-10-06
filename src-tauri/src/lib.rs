@@ -53,6 +53,26 @@ fn err<E: ToString>(e: E) -> Result<OpResult, String> {
 }
 
 #[tauri::command]
+fn list_drives() -> Vec<String> {
+  #[cfg(target_family = "unix")]
+  {
+    fs::read_to_string("/proc/mounts")
+        .unwrap_or_default()
+        .lines()
+        .filter_map(|line| line.split_whitespace().nth(1)) // second field is mount point
+        .map(|s| s.to_string())
+        .collect()
+  }
+  #[cfg(target_family = "windows")]
+  {
+    (b'A'..=b'Z')
+        .map(|c| format!("{}:\\", c as char))
+        .filter(|drive| fs::metadata(drive).is_ok())
+        .collect()
+  }
+}
+
+#[tauri::command]
 fn copy_path(src: String, dst: String, overwrite: bool) -> Result<OpResult, String> {
   let s = Path::new(&src);
   let d = Path::new(&dst);
@@ -260,6 +280,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![list_dir,
+            list_drives,
             copy_path,
             delete_path,
             create_hardlink,

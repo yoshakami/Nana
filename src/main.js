@@ -11,28 +11,15 @@ async function fetchFiles(path, limit = null) {
   }
 }
 
-
-function renderFiles(files) {
-  const container = document.querySelector("#file-list");
-  container.innerHTML = "";
-
-  files.forEach((file) => {
-    const item = document.createElement("div");
-    item.textContent = file.is_dir ? `[DIR] ${file.name}` : file.name;
-
-    // If it's an image, display preview
-    if (!file.is_dir && /\.(png|jpg|jpeg|gif)$/i.test(file.name)) {
-      const img = document.createElement("img");
-      // ⚠️ "file:///" often blocked in Tauri 2 sandbox
-      // safer approach is to read file via @tauri-apps/plugin-fs (readBinaryFile -> Blob)
-      img.src = "file:///" + file.path;
-      img.style.maxWidth = "150px";
-      img.style.maxHeight = "150px";
-      item.appendChild(img);
-    }
-
-    container.appendChild(item);
-  });
+async function listDrives() {
+  console.log("listDrives called"); // DEBUG
+  try {
+    const drives = await invoke("list_drives");
+    console.log("Files from Rust:", drives);
+    renderFiles(drives);
+  } catch (err) {
+    console.error("Error fetching files:", err);
+  }
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -111,6 +98,71 @@ document.querySelectorAll("button[data-action]").forEach((btn) => {
       console.error(`Action ${actionName} failed:`, err);
     }
   });
+});
+let selectedFiles = [];
+let lastSelectedIndex = null;
+
+function renderFiles(files) {
+  const container = document.querySelector("#file-list");
+  container.innerHTML = "";
+
+  files.forEach((file, idx) => {
+    const item = document.createElement("div");
+    item.classList.add("file-item");
+    item.dataset.index = idx;
+    item.dataset.name = file.name;
+
+    // show icon or image
+    if (file.is_dir) {
+      item.textContent = `[DIR] ${file.name}`;
+    } else {
+      item.textContent = file.name;
+      if (/\.(png|jpg|jpeg|gif)$/i.test(file.name)) {
+        const img = document.createElement("img");
+        img.src = "file:///" + file.path; // or use readBinaryFile -> Blob for Tauri 2
+        item.prepend(img);
+      }
+    }
+
+    // click logic
+    item.addEventListener("click", (e) => {
+      const index = parseInt(item.dataset.index);
+
+      if (e.shiftKey && lastSelectedIndex !== null) {
+        // select range
+        const [start, end] = [lastSelectedIndex, index].sort((a, b) => a - b);
+        for (let i = start; i <= end; i++) {
+          const el = container.querySelector(`.file-item[data-index='${i}']`);
+          if (!selectedFiles.includes(el.dataset.name)) selectedFiles.push(el.dataset.name);
+          el.classList.add("selected");
+        }
+      } else if (e.ctrlKey || e.metaKey) {
+        // toggle select
+        if (selectedFiles.includes(file.name)) {
+          selectedFiles = selectedFiles.filter(n => n !== file.name);
+          item.classList.remove("selected");
+        } else {
+          selectedFiles.push(file.name);
+          item.classList.add("selected");
+        }
+        lastSelectedIndex = index;
+      } else {
+        // single select
+        container.querySelectorAll(".file-item.selected").forEach(el => el.classList.remove("selected"));
+        selectedFiles = [file.name];
+        item.classList.add("selected");
+        lastSelectedIndex = index;
+      }
+
+      console.log("Selected files:", selectedFiles);
+    });
+
+    container.appendChild(item);
+  });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  listDrives(); // automatically list drives on load
 });
 
 /*

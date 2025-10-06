@@ -1,5 +1,7 @@
+const { invoke } = window.__TAURI__.core;
 let selectedFiles = [];
 let lastSelectedIndex = null;
+let container;
 
 // placeholder querySelector stub
 function placeholderCommand(type) {
@@ -12,16 +14,16 @@ const mockDrives = [
   { name: "C:", path: "C:\\", free: 0.75, is_dir: true },
   { name: "D:", path: "D:\\", free: 0.45, is_dir: true },
 ];
-renderDrives(mockDrives);
+renderFavourites(mockDrives);
 
-function renderDrives(drives) {
-  const container = document.querySelector("#file-list");
-  container.innerHTML = "";
+function renderFavourites(drives) {
+  let container2 = document.querySelector("#favourites");
+  container2.innerHTML = "";
   drives.forEach((drive, idx) => {
     const item = document.createElement("div");
     item.classList.add("file-item");
     item.textContent = `💽 ${drive.name}`;
-    container.appendChild(item);
+    container2.appendChild(item);
 
     item.addEventListener("click", () => {
       document.querySelectorAll(".file-item").forEach(el => el.classList.remove("selected"));
@@ -35,36 +37,165 @@ function renderDrives(drives) {
   });
 }
 
-async function fetchFiles(path) {
-  console.log("fetchFiles called with:", path);
-  // mock files
-  const files = [
-    { name: "photo.png", is_dir: false },
-    { name: "music.mp3", is_dir: false },
-    { name: "Documents", is_dir: true }
-  ];
-  renderFiles(files);
+async function fetchFiles(path, limit = null) {
+  clearError();
+  console.log("fetchFiles called with:", path, limit);
+  try {
+    const files = await invoke("list_dir", { path, limit });
+    renderFiles(files);
+  } catch (err) {
+    showError(`Error fetching files: ${err}`);
+    console.error(err);
+  }
 }
 
+function attachSelectionHandler(item, fileOrDrive, index, container) {
+  item.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    const items = Array.from(container.querySelectorAll(".file-item"));
+
+    if (e.shiftKey && lastSelectedIndex !== null) {
+      const [start, end] = [lastSelectedIndex, index].sort((a, b) => a - b);
+      items.forEach((el, i) => {
+        if (i >= start && i <= end) el.classList.add("selected");
+        else el.classList.remove("selected");
+      });
+      selectedFiles = items
+        .filter((el) => el.classList.contains("selected"))
+        .map((el) => el.dataset.name);
+    } else if (e.ctrlKey || e.metaKey) {
+      const alreadySelected = item.classList.contains("selected");
+      item.classList.toggle("selected");
+      if (alreadySelected) {
+        selectedFiles = selectedFiles.filter((n) => n !== fileOrDrive.name);
+      } else {
+        selectedFiles.push(fileOrDrive.name);
+      }
+      lastSelectedIndex = index;
+    } else {
+      items.forEach((el) => el.classList.remove("selected"));
+      item.classList.add("selected");
+      selectedFiles = [fileOrDrive.name];
+      lastSelectedIndex = index;
+    }
+  });
+}
+
+async function copyFile(src, dst) {
+  const res = await invoke("copy_path", { src, dst, overwrite: true });
+  console.log(res);
+}
+
+async function deleteFile(path) {
+  const res = await invoke("delete_path", { path });
+  console.log(res);
+}
+
+async function makeHardlink(src, dst) {
+  const res = await invoke("create_hardlink", { src, dst });
+  console.log(res);
+}
+
+async function moveFile(src, dst) {
+  const res = await invoke("move_path", { src, dst, overwrite: true });
+  console.log(res);
+}
+
+async function setReadonly(path, ro) {
+  const res = await invoke("set_readonly", { path, readonly: ro });
+  console.log(res);
+}
+
+async function createSymlink(target, link) {
+  const res = await invoke("create_symlink", { src: target, link });
+  console.log(res);
+}
+
+async function createJunction(target, link) {
+  const res = await invoke("create_ntfs_junction", { target, link });
+  console.log(res);
+}// Define all actions in a local map
+const actions = {
+  copyFile,
+  deleteFile,
+  makeHardlink,
+  moveFile,
+  setReadonly,
+  createSymlink,
+  createJunction,
+  fetchFiles,
+};
+
+// Wire buttons dynamically
+document.querySelectorAll("button[data-action]").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const actionName = btn.dataset.action;
+    const actionFn = actions[actionName];
+    if (!actionFn) {
+      console.warn(`No function found for action: ${actionName}`);
+      return;
+    }
+
+    // Collect arguments from data-args (comma-separated)
+    let args = [];
+    if (btn.dataset.args) {
+      args = btn.dataset.args.split(",").map(a => a.trim());
+    }
+
+    try {
+      const res = await actionFn(...args);
+      console.log(`Action ${actionName} result:`, res);
+    } catch (err) {
+      console.error(`Action ${actionName} failed:`, err);
+    }
+  });
+});
+
 function renderFiles(files) {
-  const container = document.querySelector("#file-list");
   container.innerHTML = "";
+
   files.forEach((file, idx) => {
     const item = document.createElement("div");
     item.classList.add("file-item");
-    item.textContent = file.is_dir ? `[DIR] ${file.name}` : file.name;
-    container.appendChild(item);
+    item.dataset.index = idx;
+    item.dataset.name = file.name;
+    item.dataset.path = file.path;
 
-    item.addEventListener("click", () => {
-      document.querySelectorAll(".file-item").forEach(el => el.classList.remove("selected"));
-      item.classList.add("selected");
-      updateProperties(file);
-      if (!file.is_dir && /\.(png|jpg|jpeg|gif)$/i.test(file.name)) {
-        showPreview(file.name);
-      } else {
-        document.getElementById("preview").innerHTML = `<p>No preview available</p>`;
-      }
-    });
+    // show icon or image
+    const icon = document.createElement("span");
+    icon.style.marginRight = "0.5em";
+    if (file.is_dir) icon.textContent = "📁";
+    else icon.textContent = "📄";
+
+    item.append(icon, document.createTextNode(file.name));
+
+    // images
+    if (!file.is_dir && /\.(png|jpg|jpeg|gif)$/i.test(file.name)) {
+      const img = document.createElement("img");
+      img.src = "file:///" + file.path;
+      img.style.maxWidth = "50px";
+      img.style.maxHeight = "50px";
+      img.style.marginLeft = "0.5em";
+      item.appendChild(img);
+    }
+
+    attachSelectionHandler(item, file, idx, container);
+
+    // double-click to open directories
+    if (file.is_dir) {
+      item.addEventListener("dblclick", async (e) => {
+        e.stopPropagation();
+        clearError();
+        try {
+          await fetchFiles(file.path);
+        } catch (err) {
+          showError(`Cannot open ${file.path}: ${err}`);
+        }
+      });
+    }
+
+    container.appendChild(item);
   });
 }
 
@@ -121,9 +252,82 @@ document.querySelectorAll("#commands-pane input[type='checkbox'], #commands-pane
   });
 });
 
+// Utility to show errors
+function showError(msg) {
+  let errDiv = document.querySelector("#error-message");
+  if (!errDiv) {
+    errDiv = document.createElement("div");
+    errDiv.id = "error-message";
+    errDiv.style.color = "red";
+    errDiv.style.margin = "0.5em 0";
+    container.parentElement.prepend(errDiv);
+  }
+  errDiv.textContent = msg;
+}
 
+// Clear previous error
+function clearError() {
+  const errDiv = document.querySelector("#error-message");
+  if (errDiv) errDiv.textContent = "";
+}
+
+
+async function listDrives() {
+  clearError();
+  try {
+    const drives = await invoke("list_drives");
+    const driveEntries = drives.map((path) => ({
+      name: path.replace(/\\$/, ""),
+      is_dir: true,
+      path,
+      free: Math.random() * 0.8 + 0.2,
+    }));
+    renderDrives(driveEntries);
+  } catch (err) {
+    showError(`Error fetching drives: ${err}`);
+    console.error(err);
+  }
+}
+function renderDrives(drives) {
+  container.innerHTML = "";
+
+  drives.forEach((drive, idx) => {
+    const item = document.createElement("div");
+    item.classList.add("file-item");
+    item.dataset.index = idx;
+    item.dataset.name = drive.name;
+    item.dataset.path = drive.path; // so we can open it later
+
+    const icon = document.createElement("span");
+    icon.textContent = "💽";
+    icon.style.fontSize = "2em";
+
+    const name = document.createElement("div");
+    name.textContent = drive.name;
+    name.style.fontWeight = "bold";
+
+    const bar = document.createElement("div");
+    bar.classList.add("drive-bar");
+    bar.innerHTML = `<div class="fill" style="width:${drive.free * 100}%;"></div>`;
+
+    item.append(icon, name, bar);
+
+    // 🟢 Add selection logic (click)
+    attachSelectionHandler(item, drive, idx, container);
+
+    // 🟣 Add double-click logic (open drive)
+    item.addEventListener("dblclick", async (e) => {
+      e.stopPropagation();
+      console.log("Double-clicked:", drive.path);
+      await fetchFiles(drive.path);
+    });
+
+    container.appendChild(item);
+  });
+}
 window.addEventListener("DOMContentLoaded", () => {
   container = document.querySelector("#file-list");
+  console.log(container);
   listDrives(); // automatically list drives on load
   // ---------- RIGHT PANEL: commands + placeholders ----------
 
@@ -142,11 +346,11 @@ window.addEventListener("DOMContentLoaded", () => {
       placeholderCommand(key);
     });
   });
-
+/*
   document.getElementById("toggle-properties").addEventListener("click", () => {
     document.getElementById("properties-pane").classList.toggle("active");
     document.getElementById("commands-pane").classList.remove("active");
-  });
+  });*/
 
   document.getElementById("toggle-commands").addEventListener("click", () => {
     document.getElementById("commands-pane").classList.toggle("active");

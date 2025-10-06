@@ -1,112 +1,122 @@
-.logo.vanilla:hover {
-  filter: drop-shadow(0 0 2em #ffe21c);
-}
 :root {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
-
   color: #0f0f0f;
   background-color: #f6f6f6;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
+  line-height: 1.6;
 }
 
 .container {
-  margin: 0;
-  padding-top: 10vh;
+  max-width: 900px;
+  margin: auto;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  gap: 2rem;
+}
+
+h1, h2, h3 {
   text-align: center;
+  margin-bottom: 0.5em;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: 0.75s;
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
 }
 
-.logo.tauri:hover {
-  filter: drop-shadow(0 0 2em #24c8db);
-}
-
-.row {
+.inline {
   display: flex;
+  gap: 0.5rem;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+input {
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 0.6em 1em;
+  flex: 1;
+  min-width: 200px;
+  background-color: #fff;
 }
 
-a:hover {
-  color: #535bf2;
-}
-
-h1 {
-  text-align: center;
-}
-
-input,
 button {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
-  font-size: 1em;
   font-weight: 500;
-  font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
-  transition: border-color 0.25s;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-}
-
-button {
+  background-color: #396cd8;
+  color: #fff;
+  transition: 0.25s;
   cursor: pointer;
 }
 
 button:hover {
-  border-color: #396cd8;
+  background-color: #2f57b0;
 }
+
 button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
+  background-color: #244284;
 }
 
-input,
-button {
-  outline: none;
+.button-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 0.5rem;
 }
 
-#greet-input {
-  margin-right: 5px;
+.file-list {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.file-list div {
+  background: #fafafa;
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  border-radius: 8px;
+  width: 180px;
+  overflow-wrap: break-word;
+  text-align: center;
+}
+
+.file-list img {
+  display: block;
+  margin: 0.5rem auto;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color: #f6f6f6;
-    background-color: #2f2f2f;
+    background-color: #1e1e1e;
   }
 
-  a:hover {
-    color: #24c8db;
+  .card {
+    background-color: #2a2a2a;
   }
 
-  input,
+  input {
+    background-color: #3a3a3a;
+    color: #fff;
+    border-color: #555;
+  }
+
   button {
-    color: #ffffff;
-    background-color: #0f0f0f98;
+    background-color: #4a82e2;
   }
-  button:active {
-    background-color: #0f0f0f69;
+
+  .file-list div {
+    background-color: #333;
+    border-color: #444;
   }
 }

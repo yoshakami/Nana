@@ -76,4 +76,51 @@ async function createSymlink(target, link) {
 async function createJunction(target, link) {
   const res = await invoke("create_ntfs_junction", { target, link });
   console.log(res);
-}
+}// Define all actions in a local map
+const actions = {
+  copyFile,
+  deleteFile,
+  makeHardlink,
+  moveFile,
+  setReadonly,
+  createSymlink,
+  createJunction,
+  fetchFiles,
+};
+
+// Wire buttons dynamically
+document.querySelectorAll("button[data-action]").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const actionName = btn.dataset.action;
+    const actionFn = actions[actionName];
+    if (!actionFn) {
+      console.warn(`No function found for action: ${actionName}`);
+      return;
+    }
+
+    // Collect arguments from data-args (comma-separated)
+    let args = [];
+    if (btn.dataset.args) {
+      args = btn.dataset.args.split(",").map(a => a.trim());
+    }
+
+    try {
+      const res = await actionFn(...args);
+      console.log(`Action ${actionName} result:`, res);
+    } catch (err) {
+      console.error(`Action ${actionName} failed:`, err);
+    }
+  });
+});
+
+/*
+// Expose functions to global scope so HTML can call them
+window.copyFile = copyFile;
+window.deleteFile = deleteFile;
+window.makeHardlink = makeHardlink;
+window.moveFile = moveFile;
+window.setReadonly = setReadonly;
+window.createSymlink = createSymlink;
+window.createJunction = createJunction;
+window.fetchFiles = fetchFiles; // if you want to call from HTML too
+*/

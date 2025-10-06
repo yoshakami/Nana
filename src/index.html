@@ -4,18 +4,54 @@
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri App</title>
+    <title>Nana File Manager</title>
     <script type="module" src="/main.js" defer></script>
   </head>
 
   <body>
     <main class="container">
-      <h1></h1>
-      <h2>File Browser</h2>
-<input id="path-input" placeholder="Enter a path, e.g. C:/" />
-<button id="load-files">Load Files</button>
-<div id="file-list"></div>
-<button onclick="listFiles()">listFiles</button>
+      <h1>Nana File Manager</h1>
+
+      <section class="file-browser card">
+        <h2>📂 File Browser</h2>
+        <div class="inline">
+          <input id="path-input" placeholder="Enter a path, e.g. C:\\" />
+          <button id="load-files">Load Files</button>
+        </div>
+        <div id="file-list" class="file-list"></div>
+      </section>
+
+      <section class="operations card">
+        <h2>⚙️ File Operations</h2>
+
+        <div class="op-group">
+          <h3>Copy / Move / Hardlink / Symlink / Junction</h3>
+          <input id="src" placeholder="Source path" />
+          <input id="dst" placeholder="Destination path" />
+          <div class="button-row">
+            <button data-action="copyFile" data-args="C:/source.jpg,C:/dest.jpg">Copy File</button>
+            <button data-action="makeHardlink" data-args="C:/source.jpg,C:/link.jpg">Hardlink</button>
+            <button data-action="moveFile" data-args="C:/source.jpg,C:/new_dest.jpg">Move File</button>
+            <button data-action="createSymlink" data-args="C:/target,C:/link">Symlink</button>
+            <button data-action="createJunction" data-args="C:/target,C:/link">Junction</button>
+          </div>
+        </div>
+
+        <div class="op-group">
+          <h3>Delete</h3>
+          <input id="delete-path" placeholder="Path to delete" />
+          <button data-action="deleteFile" data-args="C:/dest.jpg">Delete File</button>
+        </div>
+
+        <div class="op-group">
+          <h3>Read-only Attribute</h3>
+          <input id="ro-path" placeholder="Path" />
+          <div class="button-row">
+            <button data-action="setReadonly" data-args="C:/new_dest.jpg,true">Set Readonly</button>
+            <button data-action="setReadonly" data-args="C:/new_dest.jpg,false">UnSet Readonly</button>
+          </div>
+        </div>
+      </section>
     </main>
   </body>
 </html>

@@ -124,40 +124,6 @@ function attachSelectionHandler(item, fileOrDrive, index, container) {
   });
 }
 
-async function copyFile(src, dst) {
-  const res = await invoke("copy_path", { src, dst, overwrite: true });
-  console.log(res);
-}
-
-async function deleteFile(path) {
-  const res = await invoke("delete_path", { path });
-  console.log(res);
-}
-
-async function makeHardlink(src, dst) {
-  const res = await invoke("create_hardlink", { src, dst });
-  console.log(res);
-}
-
-async function moveFile(src, dst) {
-  const res = await invoke("move_path", { src, dst, overwrite: true });
-  console.log(res);
-}
-
-async function setReadonly(path, ro) {
-  const res = await invoke("set_readonly", { path, readonly: ro });
-  console.log(res);
-}
-
-async function createSymlink(target, link) {
-  const res = await invoke("create_symlink", { src: target, link });
-  console.log(res);
-}
-
-async function createJunction(target, link) {
-  const res = await invoke("create_ntfs_junction", { target, link });
-  console.log(res);
-}
 
 function renderFiles(files) {
   container.innerHTML = "";
@@ -293,17 +259,167 @@ function renderDrives(drives) {
 
     container.appendChild(item);
   });
+}// ==== Core file operations ====
+async function copyFile(src, dst) {
+  const res = await invoke("copy_path", { src, dst, overwrite: true });
+  console.log("Copy:", res);
 }
+
+async function deleteFile(path) {
+  const res = await invoke("delete_path", { path });
+  console.log("Delete:", res);
+}
+
+async function makeHardlink(src, dst) {
+  const res = await invoke("create_hardlink", { src, dst });
+  console.log("Hardlink:", res);
+}
+
+async function cutFile(src, dst) {
+  const res = await invoke("move_path", { src, dst, overwrite: true });
+  console.log("Cut:", res);
+}
+
+async function setReadonly(path, ro) {
+  const res = await invoke("set_readonly", { path, readonly: ro });
+  console.log("Set readonly:", res);
+}
+
+async function createSymlink(target, link) {
+  const res = await invoke("create_symlink", { src: target, link });
+  console.log("Symlink:", res);
+}
+
+// ==== Utility functions ====
+async function copyPathToClipboard(path) {
+  await navigator.clipboard.writeText(path);
+  console.log("Copied path:", path);
+}
+
+async function addFavourite(path) {
+  const res = await invoke("add_favourite", { path });
+  console.log("Add favourite:", res);
+}
+
+async function removeReadonly(path) {
+  await setReadonly(path, false);
+  console.log("Remove read only");
+}
+
+async function createNewFolder(parentDir, name) {
+  const res = await invoke("create_folder", { parentDir, name });
+  console.log("New folder:", res);
+}
+
+async function createNewFile(parentDir, name) {
+  const res = await invoke("create_file", { parentDir, name });
+  console.log("New file:", res);
+}
+
+async function moveToBin(path) {
+  const res = await invoke("recycle_path", { path });
+  console.log("Move to bin:", res);
+}
+
+async function selectAll() {
+  console.log("Select all items");
+}
+
+async function selectNone() {
+  console.log("Select none");
+}
+
+async function invertSelection() {
+  console.log("Invert selection");
+}
+
+async function openFile(path) {
+  const res = await invoke("open_path", { path });
+  console.log("Open:", res);
+}
+
+async function editFile(path) {
+  const res = await invoke("edit_path", { path });
+  console.log("Edit:", res);
+}
+
+async function showHistory(path) {
+  const res = await invoke("show_history", { path });
+  console.log("History:", res);
+}
+
+// Placeholder for user scripts
+async function runUserScript(id, paths) {
+  console.log(`Run Script ${id} on`, paths);
+}
+
+async function editConfigFile() {
+  const res = await invoke("open_config_file");
+  console.log("Edit config:", res);
+}
+
+// ==== Action mapping ====
 const actionFuncs = {
-  copyFile,
-  deleteFile,
-  makeHardlink,
-  moveFile,
-  setReadonly,
-  createSymlink,
-  createJunction,
-  fetchFiles,
+  copy: () => copyFile(...getClipboardOperationData()),
+  cut: () => cutFile(...getClipboardOperationData()),
+  paste: () => pasteFromClipboard(),
+  symlink: () => createSymlink(...getLinkOperationData()),
+  hardlink: () => makeHardlink(...getLinkOperationData()),
+  "copy-path": () => copyPathToClipboard(getSelectedPath()),
+  "add-favourite": () => addFavourite(getSelectedPath()),
+  "read-only": () => setReadonly(getSelectedPath(), true),
+  "read-write": () => removeReadonly(getSelectedPath()),
+  "new-folder": () => createNewFolder(getCurrentDir(), "New Folder"),
+  "new-file": () => createNewFile(getCurrentDir(), "New File.txt"),
+  "move-to-bin": () => moveToBin(getSelectedPath()),
+  "delete-forever": () => deleteFile(getSelectedPath()),
+  "select-all": () => selectAll(),
+  "select-none": () => selectNone(),
+  "invert-selection": () => invertSelection(),
+  open: () => openFile(getSelectedPath()),
+  edit: () => editFile(getSelectedPath()),
+  history: () => showHistory(getSelectedPath()),
+  "script-1": () => runUserScript(1, getSelectedPaths()),
+  "script-2": () => runUserScript(2, getSelectedPaths()),
+  "script-3": () => runUserScript(3, getSelectedPaths()),
+  "script-4": () => runUserScript(4, getSelectedPaths()),
+  "script-5": () => runUserScript(5, getSelectedPaths()),
+  "script-6": () => runUserScript(6, getSelectedPaths()),
+  "script-7": () => runUserScript(7, getSelectedPaths()),
+  "script-8": () => runUserScript(8, getSelectedPaths()),
+  "script-9": () => runUserScript(9, getSelectedPaths()),
+  "edit-config-file": () => editConfigFile(),
 };
+
+// ==== Helper placeholders ====
+function getSelectedPath() {
+  // Example: return one selected path (string)
+  return "/example/path.txt";
+}
+
+function getSelectedPaths() {
+  // Example: return array of selected paths
+  return ["/example/path1.txt", "/example/path2.txt"];
+}
+
+function getCurrentDir() {
+  return "/example/currentdir";
+}
+
+function getClipboardOperationData() {
+  // Example: return [src, dst] for copy/cut
+  return ["/example/source.txt", "/example/dest.txt"];
+}
+
+function getLinkOperationData() {
+  // Example: return [target, link]
+  return ["/example/original.txt", "/example/link.txt"];
+}
+
+function pasteFromClipboard() {
+  console.log("Paste operation triggered");
+}
+
 
 window.addEventListener("DOMContentLoaded", () => {
   container = document.querySelector("#file-list");
@@ -311,6 +427,21 @@ window.addEventListener("DOMContentLoaded", () => {
   listDrives(); // automatically list drives on load
   // ---------- RIGHT PANEL: commands + placeholders ----------
   
+// ==== Event binding ====
+document.querySelectorAll("#actions a").forEach(item => {
+  const id = item.id;
+  item.classList.add("action");
+
+  item.addEventListener("click", e => {
+    e.preventDefault();
+    document.querySelectorAll(".action").forEach(el => el.classList.remove("selected"));
+    item.classList.add("selected");
+
+    const func = actionFuncs[id];
+    if (func) func();
+    else console.warn("No action function defined for:", id);
+  });
+});
 // wire checkbox / radio interactions as simple placeholders
 document.querySelectorAll("#commands-pane input[type='checkbox'], #commands-pane input[type='radio']").forEach(el => {
   el.addEventListener("change", (e) => {

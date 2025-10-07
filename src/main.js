@@ -377,7 +377,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const divider = document.getElementById("divider");
 const app = document.getElementById("app");
 const detailsPane = document.getElementById("details-pane");
-
+const rightColumn = document.getElementById("right-column")
 let isResizing = false;
 let startX = 0;
 let startWidth = 0;
@@ -385,23 +385,21 @@ let startWidth = 0;
 divider.addEventListener("mousedown", (e) => {
   isResizing = true;
   startX = e.clientX;
-  startWidth = detailsPane.offsetWidth;
+  startWidth = rightColumn.offsetWidth;
   document.body.style.userSelect = "none";
 });
-
+const gridAppLeft = "240px 1fr"
+const gridAppGap = "8px"
 window.addEventListener("mousemove", (e) => {
   if (!isResizing) return;
-
-  const dx = startX - e.clientX;
-  const newWidth = startWidth + dx;
-  const totalWidth = app.clientWidth;
+  const newWidth = startWidth + startX - e.clientX;
 
   if (newWidth < 180) {
     detailsPane.classList.add("hidden");
-    app.style.gridTemplateColumns = "260px 1fr"; // collapse layout
+    app.style.gridTemplateColumns = gridAppLeft; // collapse layout
   } else {
     detailsPane.classList.remove("hidden");
-    app.style.gridTemplateColumns = `260px 1fr 8px ${newWidth}px`;
+    app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${newWidth}px`;
   }
 });
 
@@ -420,7 +418,7 @@ window.addEventListener("mouseup", () => {
 window.addEventListener("load", () => {
   const savedWidth = localStorage.getItem("rightWidth");
   if (savedWidth) {
-    app.style.gridTemplateColumns = `260px 1fr 8px ${savedWidth}`;
+    app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
   }
 });
 
@@ -428,10 +426,10 @@ window.addEventListener("load", () => {
 document.getElementById("toggle-details").addEventListener("click", () => {
   detailsPane.classList.toggle("hidden");
   if (detailsPane.classList.contains("hidden")) {
-    app.style.gridTemplateColumns = "260px 1fr";
+    app.style.gridTemplateColumns = gridAppLeft;
   } else {
     const savedWidth = localStorage.getItem("rightWidth") || "340px";
-    app.style.gridTemplateColumns = `260px 1fr 8px ${savedWidth}`;
+    app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
   }
 });
 });

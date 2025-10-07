@@ -80,39 +80,18 @@ ctrl + S cycle sorting mode
         <div id="file-list"></div>
       </div>
     </main>
-    
   <div id="divider"></div>
-    <!-- RIGHT column: details + commands (replace existing right-column) -->
     <s id="right-column">
-      <div class="right-controls">
-        <a id="toggle-dark" class="small-toggle">Dark</a>
-        <a id="toggle-details" class="small-toggle">Details & Actions</a>
-        <a id="toggle-shortcuts" class="small-toggle">Shortcuts</a>
-      </div>
-      <div id="details-pane" class="right-pane details-pane">
-        <div class="details-header">
-          <h3>Details</h3>
-        </div>
-        <div class="details-body" id="details-body">
-          <div class="detail-avatar" id="detail-avatar">💽</div>
-          <div class="detail-meta">
             <div class="detail-title" id="detail-title">Select a drive or item</div>
-            <div class="detail-progress">
-              <div class="progress-bar">
-                <div class="progress-fill" id="detail-fill" style="width:0%"></div>
-              </div>
-            </div>
-            <div class="detail-stats" id="detail-stats">—</div>
-            <div class="detail-fs" id="detail-fs">File system: —</div>
-          </div>
-        </div>
         <div id="splitted">
           <div id="options">
+            <h4>View</h4>
             <div class="details-controls">
               <a id="icons">💟icons</a>
               <a id="details">📊Details</a>
               <a id="compact">📕Compact List</a>
             </div>
+            <h4>Options</h4>
             <div class="details-options">
               <label><input type="checkbox" id="opt-hidden"> Hidden items</label>
               <label><input type="checkbox" id="opt-checkboxes"> Item check boxes</label>
@@ -133,7 +112,7 @@ ctrl + S cycle sorting mode
                 <label><input type="radio" name="sort" value="song-length">🎵 song length</label>
               </div>
             </div>
-            <h4>Display</h4>
+            <h4>Preview</h4>
             <div class="list">
               <label><input type="radio" name="show" value="name-only"> Show only name</label>
               <label><input type="radio" name="show" value="previews"> Show Previews</label>

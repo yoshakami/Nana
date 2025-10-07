@@ -343,12 +343,12 @@ window.addEventListener("DOMContentLoaded", () => {
   // ---------- RIGHT PANEL: commands + placeholders ----------
 
   // toggle the two panes:
-  document.getElementById("toggle-details").addEventListener("click", () => {
+  /*document.getElementById("toggle-details").addEventListener("click", () => {
     document.getElementById("details-pane").classList.toggle("hidden");
   });
   document.getElementById("toggle-shortcuts").addEventListener("click", () => {
     document.getElementById("commands-pane").classList.toggle("hidden");
-  });
+  });*/
 
   // wire the 8 static command buttons to placeholderCommand()
   document.querySelectorAll(".cmd-action-btn").forEach(btn => {
@@ -361,11 +361,11 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("toggle-properties").addEventListener("click", () => {
     document.getElementById("properties-pane").classList.toggle("active");
     document.getElementById("commands-pane").classList.remove("active");
-  });*/
+  });
 
   document.getElementById("toggle-shortcuts").addEventListener("click", () => {
     document.getElementById("commands-pane").classList.toggle("active");
-  });
+  });*/
 
   // Handle command clicks
   document.querySelectorAll("#commands-list li").forEach(cmd => {
@@ -376,7 +376,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   const divider = document.getElementById("divider");
 const app = document.getElementById("app");
-const detailsPane = document.getElementById("details-pane");
+const detailsPane = document.getElementById("splitted");
 const rightColumn = document.getElementById("right-column")
 let isResizing = false;
 let startX = 0;
@@ -394,7 +394,7 @@ window.addEventListener("mousemove", (e) => {
   if (!isResizing) return;
   const newWidth = startWidth + startX - e.clientX;
 
-  if (newWidth < 180) {
+  if (newWidth < 340) {
     detailsPane.classList.add("hidden");
     app.style.gridTemplateColumns = gridAppLeft; // collapse layout
   } else {
@@ -423,7 +423,7 @@ window.addEventListener("load", () => {
 });
 
 // Toggle button
-document.getElementById("toggle-details").addEventListener("click", () => {
+/*document.getElementById("toggle-details").addEventListener("click", () => {
   detailsPane.classList.toggle("hidden");
   if (detailsPane.classList.contains("hidden")) {
     app.style.gridTemplateColumns = gridAppLeft;
@@ -431,6 +431,6 @@ document.getElementById("toggle-details").addEventListener("click", () => {
     const savedWidth = localStorage.getItem("rightWidth") || "340px";
     app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
   }
-});
+});*/
 });
 

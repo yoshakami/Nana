@@ -18,6 +18,8 @@ body {
 #app {
   flex: 1;
   display: grid;
+    position: relative;
+  
   height: 100vh;
   width: 100%;
 }
@@ -36,7 +38,28 @@ body {
 .hidden {
   display: none !important;
 }
+.restore-button {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 60px;
+  background: linear-gradient(180deg, #2d2d2d, #1a1a1a);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.2s, right 0.2s;
+  z-index: 50;
+  opacity: 0.6;
+}
 
+.restore-button:hover {
+  opacity: 1;
+  background: linear-gradient(180deg, #3a3a3a, #222);
+}
 #right-column {
   display: flex;
   flex-direction: column;

@@ -157,42 +157,7 @@ async function createSymlink(target, link) {
 async function createJunction(target, link) {
   const res = await invoke("create_ntfs_junction", { target, link });
   console.log(res);
-}// Define all actions in a local map
-const actions = {
-  copyFile,
-  deleteFile,
-  makeHardlink,
-  moveFile,
-  setReadonly,
-  createSymlink,
-  createJunction,
-  fetchFiles,
-};
-
-// Wire buttons dynamically
-document.querySelectorAll("button[data-action]").forEach((btn) => {
-  btn.addEventListener("click", async () => {
-    const actionName = btn.dataset.action;
-    const actionFn = actions[actionName];
-    if (!actionFn) {
-      console.warn(`No function found for action: ${actionName}`);
-      return;
-    }
-
-    // Collect arguments from data-args (comma-separated)
-    let args = [];
-    if (btn.dataset.args) {
-      args = btn.dataset.args.split(",").map(a => a.trim());
-    }
-
-    try {
-      const res = await actionFn(...args);
-      console.log(`Action ${actionName} result:`, res);
-    } catch (err) {
-      console.error(`Action ${actionName} failed:`, err);
-    }
-  });
-});
+}
 
 function renderFiles(files) {
   container.innerHTML = "";
@@ -255,13 +220,6 @@ function updateProperties(file) {
   document.getElementById("prop-height").textContent = "768";
   document.getElementById("prop-length").textContent = "3:42";
 }
-
-// wire checkbox / radio interactions as simple placeholders
-document.querySelectorAll("#commands-pane input[type='checkbox'], #commands-pane input[type='radio']").forEach(el => {
-  el.addEventListener("change", (e) => {
-    console.log(`UI option changed: ${e.target.id || e.target.name} -> ${e.target.checked || e.target.value}`);
-  });
-});
 
 // Utility to show errors
 function showError(msg) {
@@ -336,12 +294,43 @@ function renderDrives(drives) {
     container.appendChild(item);
   });
 }
+const actionFuncs = {
+  copyFile,
+  deleteFile,
+  makeHardlink,
+  moveFile,
+  setReadonly,
+  createSymlink,
+  createJunction,
+  fetchFiles,
+};
+
 window.addEventListener("DOMContentLoaded", () => {
   container = document.querySelector("#file-list");
   console.log(container);
   listDrives(); // automatically list drives on load
   // ---------- RIGHT PANEL: commands + placeholders ----------
+  
+// wire checkbox / radio interactions as simple placeholders
+document.querySelectorAll("#commands-pane input[type='checkbox'], #commands-pane input[type='radio']").forEach(el => {
+  el.addEventListener("change", (e) => {
+    console.log(`UI option changed: ${e.target.id || e.target.name} -> ${e.target.checked || e.target.value}`);
+  });
+});
 
+document.querySelectorAll("#actions a").forEach(item => {
+  // Give each link the 'action' class
+  item.classList.add("action");
+
+  // Click handler for selection highlight
+  item.addEventListener("click", () => {
+    // Remove 'selected' from all actions
+    document.querySelectorAll(".action").forEach(el => el.classList.remove("selected"));
+
+    // Add it to the clicked one
+    item.classList.add("selected");
+  });
+});
   // toggle the two panes:
   /*document.getElementById("toggle-details").addEventListener("click", () => {
     document.getElementById("details-pane").classList.toggle("hidden");
@@ -366,7 +355,7 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("toggle-shortcuts").addEventListener("click", () => {
     document.getElementById("commands-pane").classList.toggle("active");
   });*/
-
+  
   // Handle command clicks
   document.querySelectorAll("#commands-list li").forEach(cmd => {
     cmd.addEventListener("click", () => {
@@ -378,6 +367,7 @@ window.addEventListener("DOMContentLoaded", () => {
 const app = document.getElementById("app");
 const detailsPane = document.getElementById("splitted");
 const rightColumn = document.getElementById("right-column")
+const restoreBtn = document.getElementById("restore-button");
 let isResizing = false;
 let startX = 0;
 let startWidth = 0;
@@ -396,13 +386,24 @@ window.addEventListener("mousemove", (e) => {
 
   if (newWidth < 340) {
     detailsPane.classList.add("hidden");
+    restoreBtn.classList.remove("hidden");
     app.style.gridTemplateColumns = gridAppLeft; // collapse layout
   } else {
     detailsPane.classList.remove("hidden");
+    restoreBtn.classList.add("hidden");
     app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${newWidth}px`;
   }
 });
+// The restore button (the floating tab)
+restoreBtn.addEventListener("click", showDetails);
+// When showing the details pane
+function showDetails() {
+  detailsPane.classList.remove("hidden");
+  restoreBtn.classList.add("hidden");
 
+  const savedWidth = localStorage.getItem("rightWidth") || "340px";
+  app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
+}
 window.addEventListener("mouseup", () => {
   if (!isResizing) return;
   document.body.style.userSelect = "";

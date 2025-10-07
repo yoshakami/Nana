@@ -82,14 +82,13 @@ ctrl + S cycle sorting mode
     </main>
   <div id="divider"></div>
     <s id="right-column">
-            <div class="detail-title" id="detail-title">Select a drive or item</div>
         <div id="splitted">
           <div id="options">
             <h4>View</h4>
             <div class="details-controls">
-              <a id="icons">💟icons</a>
-              <a id="details">📊Details</a>
-              <a id="compact">📕Compact List</a>
+              <label><input type="radio" name="view" value="icons" checked>💟icons</label>
+              <label><input type="radio" name="view" value="details">📊Details</label>
+              <label><input type="radio" name="view" value="compact">📕Compact List</label>
             </div>
             <h4>Options</h4>
             <div class="details-options">
@@ -115,7 +114,7 @@ ctrl + S cycle sorting mode
             <h4>Preview</h4>
             <div class="list">
               <label><input type="radio" name="show" value="name-only"> Show only name</label>
-              <label><input type="radio" name="show" value="previews"> Show Previews</label>
+              <label><input type="radio" name="show" value="previews" checked> Show Previews</label>
               <label><input type="radio" name="show" value="fullpics"> SHOW FULL PICS I LOVE USING RAM</label>
             </div>
           </div>
@@ -154,6 +153,7 @@ ctrl + S cycle sorting mode
       </div>
     </s>
   </div>
+  <button id="restore-button" class="restore-button hidden">▶</button>
   <script src="main.js"></script>
 </body>
 

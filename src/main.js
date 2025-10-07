@@ -3,10 +3,52 @@ let selectedFiles = [];
 let lastSelectedIndex = null;
 let container;
 
+/* js layout:
+renderFavourites
+fetchFiles
+attachSelectionHandler
+buttons actions
+renderFiles
+listDrives
+renderDrives
+DOMContentLoaded
+*/
+
 // placeholder querySelector stub
 function placeholderCommand(type) {
   const el = document.querySelector(`#prop-${type}`);
   console.log("Would operate on element:", el);
+}
+// placeholder querySelector function you asked for
+function placeholderCommand(key) {
+  // mapping to your properties IDs used in the properties pane
+  const map = {
+    name: "#prop-name",
+    type: "#prop-type",
+    size: "#prop-size",
+    modified: "#prop-modified",
+    added: "#prop-added",
+    width: "#prop-width",
+    height: "#prop-height",
+    length: "#prop-length"
+  };
+  const selector = map[key];
+  console.log("placeholderCommand ->", key, selector);
+
+  if (!selector) return;
+
+  const el = document.querySelector(selector);
+  if (!el) {
+    console.warn("Target element not found for", selector);
+    return;
+  }
+
+  // visual feedback: flash the element
+  el.classList.add("flash");
+  setTimeout(() => el.classList.remove("flash"), 280);
+
+  // just log the current value (or would run a command here)
+  console.log("Would run command on:", selector, "value:", el.textContent);
 }
 
 // --- mock drives ---
@@ -213,37 +255,6 @@ function updateProperties(file) {
   document.getElementById("prop-height").textContent = "768";
   document.getElementById("prop-length").textContent = "3:42";
 }
-// placeholder querySelector function you asked for
-function placeholderCommand(key) {
-  // mapping to your properties IDs used in the properties pane
-  const map = {
-    name: "#prop-name",
-    type: "#prop-type",
-    size: "#prop-size",
-    modified: "#prop-modified",
-    added: "#prop-added",
-    width: "#prop-width",
-    height: "#prop-height",
-    length: "#prop-length"
-  };
-  const selector = map[key];
-  console.log("placeholderCommand ->", key, selector);
-
-  if (!selector) return;
-
-  const el = document.querySelector(selector);
-  if (!el) {
-    console.warn("Target element not found for", selector);
-    return;
-  }
-
-  // visual feedback: flash the element
-  el.classList.add("flash");
-  setTimeout(() => el.classList.remove("flash"), 280);
-
-  // just log the current value (or would run a command here)
-  console.log("Would run command on:", selector, "value:", el.textContent);
-}
 
 // wire checkbox / radio interactions as simple placeholders
 document.querySelectorAll("#commands-pane input[type='checkbox'], #commands-pane input[type='radio']").forEach(el => {
@@ -363,5 +374,65 @@ window.addEventListener("DOMContentLoaded", () => {
       placeholderCommand(cmd.dataset.command);
     });
   });
+  const divider = document.getElementById("divider");
+const app = document.getElementById("app");
+const detailsPane = document.getElementById("details-pane");
+
+let isResizing = false;
+let startX = 0;
+let startWidth = 0;
+
+divider.addEventListener("mousedown", (e) => {
+  isResizing = true;
+  startX = e.clientX;
+  startWidth = detailsPane.offsetWidth;
+  document.body.style.userSelect = "none";
+});
+
+window.addEventListener("mousemove", (e) => {
+  if (!isResizing) return;
+
+  const dx = startX - e.clientX;
+  const newWidth = startWidth + dx;
+  const totalWidth = app.clientWidth;
+
+  if (newWidth < 180) {
+    detailsPane.classList.add("hidden");
+    app.style.gridTemplateColumns = "260px 1fr"; // collapse layout
+  } else {
+    detailsPane.classList.remove("hidden");
+    app.style.gridTemplateColumns = `260px 1fr 8px ${newWidth}px`;
+  }
+});
+
+window.addEventListener("mouseup", () => {
+  if (!isResizing) return;
+  document.body.style.userSelect = "";
+  isResizing = false;
+
+  if (!detailsPane.classList.contains("hidden")) {
+    const cols = app.style.gridTemplateColumns.split(" ");
+    localStorage.setItem("rightWidth", cols.pop());
+  }
+});
+
+// Restore saved width
+window.addEventListener("load", () => {
+  const savedWidth = localStorage.getItem("rightWidth");
+  if (savedWidth) {
+    app.style.gridTemplateColumns = `260px 1fr 8px ${savedWidth}`;
+  }
+});
+
+// Toggle button
+document.getElementById("toggle-details").addEventListener("click", () => {
+  detailsPane.classList.toggle("hidden");
+  if (detailsPane.classList.contains("hidden")) {
+    app.style.gridTemplateColumns = "260px 1fr";
+  } else {
+    const savedWidth = localStorage.getItem("rightWidth") || "340px";
+    app.style.gridTemplateColumns = `260px 1fr 8px ${savedWidth}`;
+  }
+});
 });
 

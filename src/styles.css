@@ -14,15 +14,41 @@ body {
   display: flex;
   flex-direction: column;
 }
-
 #app {
   flex: 1;
   display: grid;
-  grid-template-columns: 260px 1fr 340px; /* right column width included */
+  grid-template-columns: 260px 1fr 25px 340px; /* 👈 added divider between main and right column */
   height: 100vh;
   width: 100%;
 }
 
+#divider {
+  cursor: ew-resize;
+  background: linear-gradient(to right, #202020, #2a2a2a);
+  width: 25px;
+  transition: background 0.2s;
+}
+
+#divider:hover {
+  background: linear-gradient(to right, #333, #555);
+}
+
+.hidden {
+  display: none !important;
+}
+
+.right-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: linear-gradient(180deg, #131313, #0f0f0f);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  gap: 10px;
+  overflow: hidden;
+  min-width: 220px;
+  transition: width 0.2s ease, opacity 0.2s ease;
+}
 /* Sidebar */
 #sidebar {
   background: #2b2b2b;
@@ -55,14 +81,14 @@ body {
   padding: 6px;
 }
 
-.file-item {
+.file-item, a, input, label {
   padding: 6px;
   border-radius: 4px;
   cursor: pointer;
   user-select: none;
 }
-.file-item:hover { background: #3a3a3a; }
-.file-item.selected {
+.file-item:hover, a:hover, input:hover, label:hover { background: #3a3a3a; }
+.file-item.selected, a.selected, input.selected, label.selected {
   background: #0078d4;
   color: #fff;
 }
@@ -87,18 +113,6 @@ body {
   border-radius: 8px;
 }
 
-/* RIGHT COLUMN (replaces old right-pane) */
-.right-column {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: linear-gradient(180deg,#131313,#0f0f0f);
-  border-left: 1px solid rgba(255,255,255,0.05);
-  padding: 12px;
-  gap: 10px;
-  overflow: hidden;
-  min-width: 340px;
-}
 
 .right-controls {
   display: flex;

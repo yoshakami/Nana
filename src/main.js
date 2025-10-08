@@ -51,33 +51,6 @@ function placeholderCommand(key) {
   console.log("Would run command on:", selector, "value:", el.textContent);
 }
 
-// --- mock drives ---
-const mockDrives = [
-  { name: "C:", path: "C:\\", free: 0.75, is_dir: true },
-  { name: "D:", path: "D:\\", free: 0.45, is_dir: true },
-];
-renderFavourites(mockDrives);
-
-function renderFavourites(drives) {
-  let container2 = document.querySelector("#favourites");
-  container2.innerHTML = "";
-  drives.forEach((drive, idx) => {
-    const item = document.createElement("div");
-    item.classList.add("file-item");
-    item.textContent = `💽 ${drive.name}`;
-    container2.appendChild(item);
-
-    item.addEventListener("click", () => {
-      document.querySelectorAll(".file-item").forEach(el => el.classList.remove("selected"));
-      item.classList.add("selected");
-    });
-
-    item.addEventListener("dblclick", () => {
-      console.log("Opening drive:", drive.path);
-      fetchFiles(drive.path);
-    });
-  });
-}
 let globalDir = null;
 
 async function fetchFiles(path, limit = null) {
@@ -269,10 +242,8 @@ async function pasteFiles() {
 }
 // ==== Helper placeholders ====
 function getSelectedPaths() {
-
   // this var is accessible from global scope 
   // container = document.querySelector("#file-list");
-
   // get all div with class .selected
   // direct children of container.
   let a = container.querySelectorAll('.selected')
@@ -281,14 +252,6 @@ function getSelectedPaths() {
 async function copyPathToClipboard(paths) {
   await navigator.clipboard.writeText(paths);
   console.log("Copied paths:", paths);
-}
-async function addFavourite(paths) {
-  // const res = await invoke("add_favourite", { path }); // not needed if I can save config from tauri 2.0
-  // save config to favourites, and do this with this var from global scope
-  // foreach path in paths
-  // mockDrives.add(path)
-  // renderFavourites(mockDrives)
-  console.log("Add favourites:", paths);
 }
 
 async function setReadonly(path, ro) {
@@ -310,42 +273,59 @@ async function createNewFile() {
 }
 
 async function moveToBin(path) {
-  const res = await invoke("recycle_path", { path });
-  // get all div direct children of container, and remove them
-  // check if their name is in path. case sensitive. example item:
+  ///const res = await invoke("recycle_path", { path });
+  // get all selected div direct children of container, and remove them
   // <div class="file-item" data-index="10" data-name="Dolphin" data-path="C:\Dolphin"><span style="margin-right: 0.5em;">📁</span>Dolphin</div>
+  let selectedItems = container.querySelectorAll('.selected');
+  for (item of selectedItems) {
+    item.remove();
+  }
+  const res = await invoke("move_to_bin", { path });
   console.log("Move to bin:", res);
 }
 
 async function deleteFile(path) {
   // get all div direct children of container, and remove them
+  let selectedItems = container.querySelectorAll('.selected');
+  for (item of selectedItems) {
+    item.remove();
+  }
   const res = await invoke("delete_path", { path });
   console.log("Delete:", res);
 }
 
 async function selectAll() {
+  [...container.querySelectorAll(":scope > .file-item")].forEach(el => el.classList.add("selected"));
   console.log("Select all items");
 }
 
 async function selectNone() {
+  [...container.querySelectorAll(":scope > .file-item")].forEach(el => el.classList.remove("selected"));
   console.log("Select none");
 }
 
 async function invertSelection() {
+  [...container.querySelectorAll(":scope > .file-item")].forEach(el => {
+    el.classList.toggle("selected");
+  });
   console.log("Invert selection");
 }
 
-async function openFile(path) {
-  const res = await invoke("open_path", { path });
+
+async function openFile(paths) {
+  if (!paths?.length) return;
+  const res = await invoke("open_paths", { paths });
   console.log("Open:", res);
 }
 
-async function editFile(path) {
-  const res = await invoke("edit_path", { path });
+async function editFile(paths) {
+  if (!paths?.length) return;
+  const res = await invoke("edit_path", { paths });
   console.log("Edit:", res);
 }
 
 async function showHistory(path) {
+  if (!path) return;
   const res = await invoke("show_history", { path });
   console.log("History:", res);
 }
@@ -394,149 +374,210 @@ const actionFuncs = {
   "edit-config-file": () => editConfigFile(),
 };
 
+// ==== FAVOURITES ====
 
-window.addEventListener("DOMContentLoaded", () => {
-  //container = document.querySelector("#file-list");
-  console.log(container);
-  listDrives(); // automatically list drives on load
-  // ---------- RIGHT PANEL: commands + placeholders ----------
 
-  // ==== Event binding ====
-  document.querySelectorAll("#actions a").forEach(item => {
-    const id = item.id;
-    item.classList.add("action");
+// --- mock drives ---
+let mockDrives = [
+  // { name: "C:", path: "C:\\", type:0 },
+  // { name: "D:", path: "D:\\" },
+];
+renderFavourites(mockDrives);
 
-    item.addEventListener("click", e => {
-      e.preventDefault();
-      document.querySelectorAll(".action").forEach(el => el.classList.remove("selected"));
-      item.classList.add("selected");
+function renderFavourites(drives) {
+  let container2 = document.querySelector("#favourites");
+  container2.innerHTML = "";
+  drives.forEach((drive, idx) => {
+    const item = document.createElement("div");
+    item.classList.add("file-item");
+    switch (drive.type) {
+      case 0:
+        item.textContent = `💽`
+        break;
+      case 1:
+        item.textContent = `📝`
+        break;
+      case 2:
+        item.textContent = `📁`
+        break;
+    }
 
-      const func = actionFuncs[id];
-      if (func) func();
-      else console.warn("No action function defined for:", id);
-    });
-  });
-  // wire checkbox / radio interactions as simple placeholders
-  document.querySelectorAll("#commands-pane input[type='checkbox'], #commands-pane input[type='radio']").forEach(el => {
-    el.addEventListener("change", (e) => {
-      console.log(`UI option changed: ${e.target.id || e.target.name} -> ${e.target.checked || e.target.value}`);
-    });
-  });
+    item.textContent += `${drive.name}`;
+    container2.appendChild(item);
 
-  document.querySelectorAll("#actions a").forEach(item => {
-    // Give each link the 'action' class
-    item.classList.add("action");
-
-    // Click handler for selection highlight
     item.addEventListener("click", () => {
-      // Remove 'selected' from all actions
-      document.querySelectorAll(".action").forEach(el => el.classList.remove("selected"));
-
-      // Add it to the clicked one
+      document.querySelectorAll(".file-item").forEach(el => el.classList.remove("selected"));
       item.classList.add("selected");
     });
-  });
-  // toggle the two panes:
-  /*document.getElementById("toggle-details").addEventListener("click", () => {
-    document.getElementById("details-pane").classList.toggle("hidden");
-  });
-  document.getElementById("toggle-shortcuts").addEventListener("click", () => {
-    document.getElementById("commands-pane").classList.toggle("hidden");
-  });*/
 
-  // wire the 8 static command buttons to placeholderCommand()
-  document.querySelectorAll(".cmd-action-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const key = btn.dataset.cmd; // name, type, size, modified, added, width, height, length
-      placeholderCommand(key);
+    item.addEventListener("dblclick", () => {
+      console.log("Opening:", drive.path);
+      fetchFiles(drive.path);
     });
   });
-  /*
-    document.getElementById("toggle-properties").addEventListener("click", () => {
-      document.getElementById("properties-pane").classList.toggle("active");
-      document.getElementById("commands-pane").classList.remove("active");
-    });
-  
-    document.getElementById("toggle-shortcuts").addEventListener("click", () => {
-      document.getElementById("commands-pane").classList.toggle("active");
-    });*/
+}
 
-  // Handle command clicks
-  document.querySelectorAll("#commands-list li").forEach(cmd => {
-    cmd.addEventListener("click", () => {
-      console.log(`Command triggered: ${cmd.dataset.command}`);
-      placeholderCommand(cmd.dataset.command);
-    });
-  });
-  const divider = document.getElementById("divider");
-  const app = document.getElementById("app");
-  const detailsPane = document.getElementById("splitted");
-  const rightColumn = document.getElementById("right-column")
-  const restoreBtn = document.getElementById("restore-button");
-  let isResizing = false;
-  let startX = 0;
-  let startWidth = 0;
+function saveFavourites() {
+  try {
+    localStorage.setItem("favourites", JSON.stringify(mockDrives));
+    console.log("✅ Favourites saved:", mockDrives);
+  } catch (err) {
+    console.error("Failed to save favourites:", err);
+  }
+}
 
-  divider.addEventListener("mousedown", (e) => {
-    isResizing = true;
-    startX = e.clientX;
-    startWidth = rightColumn.offsetWidth;
-    document.body.style.userSelect = "none";
-  });
-  const gridAppLeft = "240px 1fr"
-  const gridAppGap = "8px"
-  window.addEventListener("mousemove", (e) => {
-    if (!isResizing) return;
-    const newWidth = startWidth + startX - e.clientX;
-
-    if (newWidth < 340) {
-      detailsPane.classList.add("hidden");
-      restoreBtn.classList.remove("hidden");
-      app.style.gridTemplateColumns = gridAppLeft; // collapse layout
+function loadFavourites() {
+  try {
+    const data = localStorage.getItem("favourites");
+    if (data) {
+      mockDrives = JSON.parse(data);
+      console.log("📂 Favourites loaded:", mockDrives);
+      renderFavourites(mockDrives);
     } else {
-      detailsPane.classList.remove("hidden");
-      restoreBtn.classList.add("hidden");
-      app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${newWidth}px`;
+      mockDrives = [];
+    }
+  } catch (err) {
+    console.error("Failed to load favourites:", err);
+    mockDrives = [];
+  }
+}
+
+// 🟡 Add new favourites (paths[] = array of strings)
+async function addFavourite(paths) {
+  if (!paths?.length) return;
+  let changed = false;
+
+  paths.forEach(path => {
+    // Avoid duplicates
+    if (!mockDrives.some(d => d.path === path)) {
+      const type = path.endsWith("\\") || path.endsWith("/") ? 0 : 2; // guess type: drive(0) or folder(2)
+      const name = path.replace(/\\$/, "").split(/[\\/]/).pop() || path; // last part or drive name
+      mockDrives.push({ name, path, type });
+      changed = true;
     }
   });
-  // The restore button (the floating tab)
-  restoreBtn.addEventListener("click", showDetails);
-  // When showing the details pane
-  function showDetails() {
+
+  if (changed) {
+    saveFavourites();
+    renderFavourites(mockDrives);
+    console.log("⭐ Added favourites:", paths);
+  } else {
+    console.log("⚠️ Already in favourites:", paths);
+  }
+}
+
+// 🗑️ Remove a favourite by path
+async function removeFavourite(path) {
+  const index = mockDrives.findIndex(d => d.path === path);
+  if (index >= 0) {
+    mockDrives.splice(index, 1);
+    saveFavourites();
+    renderFavourites(mockDrives);
+    console.log("🗑️ Removed favourite:", path);
+  }
+}
+
+console.log(container);
+loadFavourites();   // <=== load them right away
+listDrives(); // automatically list drives on load
+// ---------- RIGHT PANEL: commands + placeholders ----------
+
+// ==== Event binding ====
+document.querySelectorAll("#actions a").forEach(item => {
+  const id = item.id;
+  item.classList.add("action");
+
+  item.addEventListener("mouseup", () => {
+    item.classList.remove("selected")
+    console.log("remove classlist")
+  });
+  item.addEventListener("mousedown", e => {
+    e.preventDefault();
+    document.querySelectorAll(".action").forEach(el => el.classList.remove("selected"));
+    item.classList.add("selected");
+
+    const func = actionFuncs[id];
+    if (func) func();
+    else console.warn("No action function defined for:", id);
+  });
+});
+// wire checkbox / radio interactions as simple placeholders
+document.querySelectorAll("#commands-pane input[type='checkbox'], #commands-pane input[type='radio']").forEach(el => {
+  el.addEventListener("change", (e) => {
+    console.log(`UI option changed: ${e.target.id || e.target.name} -> ${e.target.checked || e.target.value}`);
+  });
+});
+// wire the 8 static command buttons to placeholderCommand()
+document.querySelectorAll(".cmd-action-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const key = btn.dataset.cmd; // name, type, size, modified, added, width, height, length
+    placeholderCommand(key);
+  });
+});
+// Handle command clicks
+document.querySelectorAll("#commands-list li").forEach(cmd => {
+  cmd.addEventListener("click", () => {
+    console.log(`Command triggered: ${cmd.dataset.command}`);
+    placeholderCommand(cmd.dataset.command);
+  });
+});
+const divider = document.getElementById("divider");
+const app = document.getElementById("app");
+const detailsPane = document.getElementById("splitted");
+const rightColumn = document.getElementById("right-column")
+const restoreBtn = document.getElementById("restore-button");
+let isResizing = false;
+let startX = 0;
+let startWidth = 0;
+
+divider.addEventListener("mousedown", (e) => {
+  isResizing = true;
+  startX = e.clientX;
+  startWidth = rightColumn.offsetWidth;
+  document.body.style.userSelect = "none";
+});
+const gridAppLeft = "240px 1fr"
+const gridAppGap = "8px"
+window.addEventListener("mousemove", (e) => {
+  if (!isResizing) return;
+  const newWidth = startWidth + startX - e.clientX;
+
+  if (newWidth < 340) {
+    detailsPane.classList.add("hidden");
+    restoreBtn.classList.remove("hidden");
+    app.style.gridTemplateColumns = gridAppLeft; // collapse layout
+  } else {
     detailsPane.classList.remove("hidden");
     restoreBtn.classList.add("hidden");
+    app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${newWidth}px`;
+  }
+});
+// The restore button (the floating tab)
+restoreBtn.addEventListener("click", showDetails);
+// When showing the details pane
+function showDetails() {
+  detailsPane.classList.remove("hidden");
+  restoreBtn.classList.add("hidden");
 
-    const savedWidth = localStorage.getItem("rightWidth") || "340px";
+  const savedWidth = localStorage.getItem("rightWidth") || "340px";
+  app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
+}
+window.addEventListener("mouseup", () => {
+  if (!isResizing) return;
+  document.body.style.userSelect = "";
+  isResizing = false;
+
+  if (!detailsPane.classList.contains("hidden")) {
+    const cols = app.style.gridTemplateColumns.split(" ");
+    localStorage.setItem("rightWidth", cols.pop());
+  }
+});
+
+// Restore saved width
+window.addEventListener("load", () => {
+  const savedWidth = localStorage.getItem("rightWidth");
+  if (savedWidth) {
     app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
   }
-  window.addEventListener("mouseup", () => {
-    if (!isResizing) return;
-    document.body.style.userSelect = "";
-    isResizing = false;
-
-    if (!detailsPane.classList.contains("hidden")) {
-      const cols = app.style.gridTemplateColumns.split(" ");
-      localStorage.setItem("rightWidth", cols.pop());
-    }
-  });
-
-  // Restore saved width
-  window.addEventListener("load", () => {
-    const savedWidth = localStorage.getItem("rightWidth");
-    if (savedWidth) {
-      app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
-    }
-  });
-
-  // Toggle button
-  /*document.getElementById("toggle-details").addEventListener("click", () => {
-    detailsPane.classList.toggle("hidden");
-    if (detailsPane.classList.contains("hidden")) {
-      app.style.gridTemplateColumns = gridAppLeft;
-    } else {
-      const savedWidth = localStorage.getItem("rightWidth") || "340px";
-      app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
-    }
-  });*/
 });
 

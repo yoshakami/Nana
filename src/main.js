@@ -15,12 +15,12 @@ DOMContentLoaded
 */
 
 // placeholder querySelector stub
-function placeholderCommand(type) {
+async function placeholderCommand(type) {
   const el = document.querySelector(`#prop-${type}`);
   console.log("Would operate on element:", el);
 }
 // placeholder querySelector function you asked for
-function placeholderCommand(key) {
+async function placeholderCommand(key) {
   // mapping to your properties IDs used in the properties pane
   const map = {
     name: "#prop-name",
@@ -65,11 +65,11 @@ async function fetchFiles(path, limit = null) {
     console.error(err);
   }
 }
-function attachSelectionHandler(item, fileOrDrive, index, container) {
+async function attachSelectionHandler(item, fileOrDrive, index, container) {
   item.addEventListener("click", (e) => {
     e.stopPropagation();
 
-    const items = Array.from(container.querySelectorAll(".file-item"));
+    const items = Array.from(document.querySelectorAll(".file-item"));
 
     if (e.shiftKey && lastSelectedIndex !== null) {
       const [start, end] = [lastSelectedIndex, index].sort((a, b) => a - b);
@@ -99,7 +99,7 @@ function attachSelectionHandler(item, fileOrDrive, index, container) {
 }
 
 
-function renderFiles(files) {
+async function renderFiles(files) {
   container.innerHTML = "";
 
   files.forEach((file, idx) => {
@@ -146,11 +146,11 @@ function renderFiles(files) {
   });
 }
 
-function showPreview(name) {
+async function showPreview(name) {
   document.getElementById("preview").innerHTML = `<img src="mock/${name}" alt="${name}">`;
 }
 
-function updateProperties(file) {
+async function updateProperties(file) {
   document.getElementById("prop-name").textContent = file.name;
   document.getElementById("prop-type").textContent = file.is_dir ? "Folder" : "File";
   document.getElementById("prop-size").textContent = "123 KB";
@@ -162,7 +162,7 @@ function updateProperties(file) {
 }
 
 // Utility to show errors
-function showError(msg) {
+async function showError(msg) {
   let errDiv = document.querySelector("#error-message");
   if (!errDiv) {
     errDiv = document.createElement("div");
@@ -175,7 +175,7 @@ function showError(msg) {
 }
 
 // Clear previous error
-function clearError() {
+async function clearError() {
   const errDiv = document.querySelector("#error-message");
   if (errDiv) errDiv.textContent = "";
 }
@@ -197,7 +197,7 @@ async function listDrives() {
     console.error(err);
   }
 }
-function renderDrives(drives) {
+async function renderDrives(drives) {
   container.innerHTML = "";
 
   drives.forEach((drive, idx) => {
@@ -241,7 +241,7 @@ async function pasteFiles() {
   console.log("paste files:", op);
 }
 // ==== Helper placeholders ====
-function getSelectedPaths() {
+async function getSelectedPaths() {
   // this var is accessible from global scope 
   // container = document.querySelector("#file-list");
   // get all div with class .selected
@@ -384,7 +384,7 @@ let mockDrives = [
 ];
 renderFavourites(mockDrives);
 
-function renderFavourites(drives) {
+async function renderFavourites(drives) {
   let container2 = document.querySelector("#favourites");
   container2.innerHTML = "";
   drives.forEach((drive, idx) => {
@@ -404,20 +404,27 @@ function renderFavourites(drives) {
 
     item.textContent += `${drive.name}`;
     container2.appendChild(item);
+    let file = {name: drive.name, path: drive.path}
+    attachSelectionHandler(item, file, idx, container);
 
-    item.addEventListener("click", () => {
-      document.querySelectorAll(".file-item").forEach(el => el.classList.remove("selected"));
-      item.classList.add("selected");
-    });
-
+    // double-click to open directories
+    if (file.is_dir) {
+      item.addEventListener("dblclick", async (e) => {
+      });
+    }
     item.addEventListener("dblclick", () => {
       console.log("Opening:", drive.path);
-      fetchFiles(drive.path);
+      clearError();
+      try {
+        fetchFiles(file.path);
+      } catch (err) {
+        showError(`Cannot open ${file.path}: ${err}`);
+      }
     });
   });
 }
 
-function saveFavourites() {
+async function saveFavourites() {
   try {
     localStorage.setItem("favourites", JSON.stringify(mockDrives));
     console.log("✅ Favourites saved:", mockDrives);
@@ -426,7 +433,7 @@ function saveFavourites() {
   }
 }
 
-function loadFavourites() {
+async function loadFavourites() {
   try {
     const data = localStorage.getItem("favourites");
     if (data) {
@@ -555,7 +562,7 @@ window.addEventListener("mousemove", (e) => {
 // The restore button (the floating tab)
 restoreBtn.addEventListener("click", showDetails);
 // When showing the details pane
-function showDetails() {
+async function showDetails() {
   detailsPane.classList.remove("hidden");
   restoreBtn.classList.add("hidden");
 

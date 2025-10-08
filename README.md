@@ -9,7 +9,13 @@ developped with Tauri in vanilla HTML, CSS and Javascript.
 
 Compile me before crates.io removes my dependancies!
 
-this is all the config needed
+this is all the config needed.
+
+dev uses 200MB Ram on win10 (because tauri)
+
+release uses 100MB Ram on win10 (because tauri)
+
+exe file is 8.5MB in size
 ```
 setx WEBVIEW2_BROWSER_EXECUTABLE_FOLDER "C:\Git\Microsoft.WebView2.FixedVersionRuntime.140.0.3485.94.x64"
 ```

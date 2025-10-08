@@ -1,7 +1,7 @@
 const { invoke } = window.__TAURI__.core;
 let selectedFiles = [];
 let lastSelectedIndex = null;
-let container;
+const container = document.querySelector("#file-list");;
 
 /* js layout:
 renderFavourites
@@ -78,10 +78,12 @@ function renderFavourites(drives) {
     });
   });
 }
+let globalDir = null;
 
 async function fetchFiles(path, limit = null) {
   clearError();
   console.log("fetchFiles called with:", path, limit);
+  globalDir = path;
   try {
     const files = await invoke("list_dir", { path, limit });
     renderFiles(files);
@@ -90,7 +92,6 @@ async function fetchFiles(path, limit = null) {
     console.error(err);
   }
 }
-
 function attachSelectionHandler(item, fileOrDrive, index, container) {
   item.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -259,25 +260,35 @@ function renderDrives(drives) {
 
     container.appendChild(item);
   });
-}// ==== Core file operations ====
-async function copyFile(src, dst) {
-  const res = await invoke("copy_path", { src, dst, overwrite: true });
-  console.log("Copy:", res);
 }
 
-async function deleteFile(path) {
-  const res = await invoke("delete_path", { path });
-  console.log("Delete:", res);
+// ==== Actions ====
+async function pasteFiles() {
+  const res = await invoke("paste", { op });
+  console.log("paste files:", op);
 }
+// ==== Helper placeholders ====
+function getSelectedPaths() {
 
-async function makeHardlink(src, dst) {
-  const res = await invoke("create_hardlink", { src, dst });
-  console.log("Hardlink:", res);
+  // this var is accessible from global scope 
+  // container = document.querySelector("#file-list");
+
+  // get all div with class .selected
+  // direct children of container.
+  let a = container.querySelectorAll('.selected')
+  return Array.from(a).map((x) => x.getAttribute('data-path'));
 }
-
-async function cutFile(src, dst) {
-  const res = await invoke("move_path", { src, dst, overwrite: true });
-  console.log("Cut:", res);
+async function copyPathToClipboard(paths) {
+  await navigator.clipboard.writeText(paths);
+  console.log("Copied paths:", paths);
+}
+async function addFavourite(paths) {
+  // const res = await invoke("add_favourite", { path }); // not needed if I can save config from tauri 2.0
+  // save config to favourites, and do this with this var from global scope
+  // foreach path in paths
+  // mockDrives.add(path)
+  // renderFavourites(mockDrives)
+  console.log("Add favourites:", paths);
 }
 
 async function setReadonly(path, ro) {
@@ -285,40 +296,31 @@ async function setReadonly(path, ro) {
   console.log("Set readonly:", res);
 }
 
-async function createSymlink(target, link) {
-  const res = await invoke("create_symlink", { src: target, link });
-  console.log("Symlink:", res);
+async function createNewFolder() {
+  // this var is accessible from global scope 
+  // globalDir = "C:\"
+  // need to do something about folder name? or just let user rename manually after
+  const res = await invoke("create_folder", { globalDir, name: "NewFolder" });
+  console.log("New folder:", globalDir);
 }
 
-// ==== Utility functions ====
-async function copyPathToClipboard(path) {
-  await navigator.clipboard.writeText(path);
-  console.log("Copied path:", path);
-}
-
-async function addFavourite(path) {
-  const res = await invoke("add_favourite", { path });
-  console.log("Add favourite:", res);
-}
-
-async function removeReadonly(path) {
-  await setReadonly(path, false);
-  console.log("Remove read only");
-}
-
-async function createNewFolder(parentDir, name) {
-  const res = await invoke("create_folder", { parentDir, name });
-  console.log("New folder:", res);
-}
-
-async function createNewFile(parentDir, name) {
-  const res = await invoke("create_file", { parentDir, name });
+async function createNewFile() {
+  const res = await invoke("create_file", { globalDir, name: "NewFile" });
   console.log("New file:", res);
 }
 
 async function moveToBin(path) {
   const res = await invoke("recycle_path", { path });
+  // get all div direct children of container, and remove them
+  // check if their name is in path. case sensitive. example item:
+  // <div class="file-item" data-index="10" data-name="Dolphin" data-path="C:\Dolphin"><span style="margin-right: 0.5em;">📁</span>Dolphin</div>
   console.log("Move to bin:", res);
+}
+
+async function deleteFile(path) {
+  // get all div direct children of container, and remove them
+  const res = await invoke("delete_path", { path });
+  console.log("Delete:", res);
 }
 
 async function selectAll() {
@@ -358,27 +360,28 @@ async function editConfigFile() {
   console.log("Edit config:", res);
 }
 
+let op = null; // { type: "copy"|"cut", paths: [] }
 // ==== Action mapping ====
 const actionFuncs = {
-  copy: () => copyFile(...getClipboardOperationData()),
-  cut: () => cutFile(...getClipboardOperationData()),
-  paste: () => pasteFromClipboard(),
-  symlink: () => createSymlink(...getLinkOperationData()),
-  hardlink: () => makeHardlink(...getLinkOperationData()),
-  "copy-path": () => copyPathToClipboard(getSelectedPath()),
-  "add-favourite": () => addFavourite(getSelectedPath()),
-  "read-only": () => setReadonly(getSelectedPath(), true),
-  "read-write": () => removeReadonly(getSelectedPath()),
-  "new-folder": () => createNewFolder(getCurrentDir(), "New Folder"),
-  "new-file": () => createNewFile(getCurrentDir(), "New File.txt"),
-  "move-to-bin": () => moveToBin(getSelectedPath()),
-  "delete-forever": () => deleteFile(getSelectedPath()),
+  copy: () => { op = { type: "copy", paths: getSelectedPaths() }; },
+  cut: () => { op = { type: "cut", paths: getSelectedPaths() }; },
+  paste: () => pasteFiles(),
+  symlink: () => { op = { type: "symlink", paths: getSelectedPaths() }; },
+  hardlink: () => { op = { type: "hardlink", paths: getSelectedPaths() }; },
+  "copy-path": () => copyPathToClipboard(getSelectedPaths()),
+  "add-favourite": () => addFavourite(getSelectedPaths()),
+  "read-only": () => setReadonly(getSelectedPaths(), true),
+  "read-write": () => setReadonly(getSelectedPaths(), false),
+  "new-folder": () => createNewFolder(),
+  "new-file": () => createNewFile(),
+  "move-to-bin": () => moveToBin(getSelectedPaths()),
+  "delete-forever": () => deleteFile(getSelectedPaths()),
   "select-all": () => selectAll(),
   "select-none": () => selectNone(),
   "invert-selection": () => invertSelection(),
-  open: () => openFile(getSelectedPath()),
-  edit: () => editFile(getSelectedPath()),
-  history: () => showHistory(getSelectedPath()),
+  open: () => openFile(getSelectedPaths()),
+  edit: () => editFile(getSelectedPaths()),
+  history: () => showHistory(getLastSelected()),
   "script-1": () => runUserScript(1, getSelectedPaths()),
   "script-2": () => runUserScript(2, getSelectedPaths()),
   "script-3": () => runUserScript(3, getSelectedPaths()),
@@ -391,77 +394,48 @@ const actionFuncs = {
   "edit-config-file": () => editConfigFile(),
 };
 
-// ==== Helper placeholders ====
-function getSelectedPath() {
-  // Example: return one selected path (string)
-  return "/example/path.txt";
-}
-
-function getSelectedPaths() {
-  // Example: return array of selected paths
-  return ["/example/path1.txt", "/example/path2.txt"];
-}
-
-function getCurrentDir() {
-  return "/example/currentdir";
-}
-
-function getClipboardOperationData() {
-  // Example: return [src, dst] for copy/cut
-  return ["/example/source.txt", "/example/dest.txt"];
-}
-
-function getLinkOperationData() {
-  // Example: return [target, link]
-  return ["/example/original.txt", "/example/link.txt"];
-}
-
-function pasteFromClipboard() {
-  console.log("Paste operation triggered");
-}
-
 
 window.addEventListener("DOMContentLoaded", () => {
-  container = document.querySelector("#file-list");
+  //container = document.querySelector("#file-list");
   console.log(container);
   listDrives(); // automatically list drives on load
   // ---------- RIGHT PANEL: commands + placeholders ----------
-  
-// ==== Event binding ====
-document.querySelectorAll("#actions a").forEach(item => {
-  const id = item.id;
-  item.classList.add("action");
 
-  item.addEventListener("click", e => {
-    e.preventDefault();
-    document.querySelectorAll(".action").forEach(el => el.classList.remove("selected"));
-    item.classList.add("selected");
+  // ==== Event binding ====
+  document.querySelectorAll("#actions a").forEach(item => {
+    const id = item.id;
+    item.classList.add("action");
 
-    const func = actionFuncs[id];
-    if (func) func();
-    else console.warn("No action function defined for:", id);
+    item.addEventListener("click", e => {
+      e.preventDefault();
+      document.querySelectorAll(".action").forEach(el => el.classList.remove("selected"));
+      item.classList.add("selected");
+
+      const func = actionFuncs[id];
+      if (func) func();
+      else console.warn("No action function defined for:", id);
+    });
   });
-});
-// wire checkbox / radio interactions as simple placeholders
-document.querySelectorAll("#commands-pane input[type='checkbox'], #commands-pane input[type='radio']").forEach(el => {
-  el.addEventListener("change", (e) => {
-    console.log(`UI option changed: ${e.target.id || e.target.name} -> ${e.target.checked || e.target.value}`);
+  // wire checkbox / radio interactions as simple placeholders
+  document.querySelectorAll("#commands-pane input[type='checkbox'], #commands-pane input[type='radio']").forEach(el => {
+    el.addEventListener("change", (e) => {
+      console.log(`UI option changed: ${e.target.id || e.target.name} -> ${e.target.checked || e.target.value}`);
+    });
   });
-});
 
-document.querySelectorAll("#actions a").forEach(item => {
-  // Give each link the 'action' class
-  item.classList.add("action");
+  document.querySelectorAll("#actions a").forEach(item => {
+    // Give each link the 'action' class
+    item.classList.add("action");
 
-  // Click handler for selection highlight
-  item.addEventListener("click", () => {
-    // Remove 'selected' from all actions
-    document.querySelectorAll(".action").forEach(el => el.classList.remove("selected"));
+    // Click handler for selection highlight
+    item.addEventListener("click", () => {
+      // Remove 'selected' from all actions
+      document.querySelectorAll(".action").forEach(el => el.classList.remove("selected"));
 
-    // Add it to the clicked one
-    item.classList.add("selected");
+      // Add it to the clicked one
+      item.classList.add("selected");
+    });
   });
-});
   // toggle the two panes:
   /*document.getElementById("toggle-details").addEventListener("click", () => {
     document.getElementById("details-pane").classList.toggle("hidden");
@@ -477,16 +451,16 @@ document.querySelectorAll("#actions a").forEach(item => {
       placeholderCommand(key);
     });
   });
-/*
-  document.getElementById("toggle-properties").addEventListener("click", () => {
-    document.getElementById("properties-pane").classList.toggle("active");
-    document.getElementById("commands-pane").classList.remove("active");
-  });
-
-  document.getElementById("toggle-shortcuts").addEventListener("click", () => {
-    document.getElementById("commands-pane").classList.toggle("active");
-  });*/
+  /*
+    document.getElementById("toggle-properties").addEventListener("click", () => {
+      document.getElementById("properties-pane").classList.toggle("active");
+      document.getElementById("commands-pane").classList.remove("active");
+    });
   
+    document.getElementById("toggle-shortcuts").addEventListener("click", () => {
+      document.getElementById("commands-pane").classList.toggle("active");
+    });*/
+
   // Handle command clicks
   document.querySelectorAll("#commands-list li").forEach(cmd => {
     cmd.addEventListener("click", () => {
@@ -495,74 +469,74 @@ document.querySelectorAll("#actions a").forEach(item => {
     });
   });
   const divider = document.getElementById("divider");
-const app = document.getElementById("app");
-const detailsPane = document.getElementById("splitted");
-const rightColumn = document.getElementById("right-column")
-const restoreBtn = document.getElementById("restore-button");
-let isResizing = false;
-let startX = 0;
-let startWidth = 0;
+  const app = document.getElementById("app");
+  const detailsPane = document.getElementById("splitted");
+  const rightColumn = document.getElementById("right-column")
+  const restoreBtn = document.getElementById("restore-button");
+  let isResizing = false;
+  let startX = 0;
+  let startWidth = 0;
 
-divider.addEventListener("mousedown", (e) => {
-  isResizing = true;
-  startX = e.clientX;
-  startWidth = rightColumn.offsetWidth;
-  document.body.style.userSelect = "none";
-});
-const gridAppLeft = "240px 1fr"
-const gridAppGap = "8px"
-window.addEventListener("mousemove", (e) => {
-  if (!isResizing) return;
-  const newWidth = startWidth + startX - e.clientX;
+  divider.addEventListener("mousedown", (e) => {
+    isResizing = true;
+    startX = e.clientX;
+    startWidth = rightColumn.offsetWidth;
+    document.body.style.userSelect = "none";
+  });
+  const gridAppLeft = "240px 1fr"
+  const gridAppGap = "8px"
+  window.addEventListener("mousemove", (e) => {
+    if (!isResizing) return;
+    const newWidth = startWidth + startX - e.clientX;
 
-  if (newWidth < 340) {
-    detailsPane.classList.add("hidden");
-    restoreBtn.classList.remove("hidden");
-    app.style.gridTemplateColumns = gridAppLeft; // collapse layout
-  } else {
+    if (newWidth < 340) {
+      detailsPane.classList.add("hidden");
+      restoreBtn.classList.remove("hidden");
+      app.style.gridTemplateColumns = gridAppLeft; // collapse layout
+    } else {
+      detailsPane.classList.remove("hidden");
+      restoreBtn.classList.add("hidden");
+      app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${newWidth}px`;
+    }
+  });
+  // The restore button (the floating tab)
+  restoreBtn.addEventListener("click", showDetails);
+  // When showing the details pane
+  function showDetails() {
     detailsPane.classList.remove("hidden");
     restoreBtn.classList.add("hidden");
-    app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${newWidth}px`;
-  }
-});
-// The restore button (the floating tab)
-restoreBtn.addEventListener("click", showDetails);
-// When showing the details pane
-function showDetails() {
-  detailsPane.classList.remove("hidden");
-  restoreBtn.classList.add("hidden");
 
-  const savedWidth = localStorage.getItem("rightWidth") || "340px";
-  app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
-}
-window.addEventListener("mouseup", () => {
-  if (!isResizing) return;
-  document.body.style.userSelect = "";
-  isResizing = false;
-
-  if (!detailsPane.classList.contains("hidden")) {
-    const cols = app.style.gridTemplateColumns.split(" ");
-    localStorage.setItem("rightWidth", cols.pop());
-  }
-});
-
-// Restore saved width
-window.addEventListener("load", () => {
-  const savedWidth = localStorage.getItem("rightWidth");
-  if (savedWidth) {
-    app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
-  }
-});
-
-// Toggle button
-/*document.getElementById("toggle-details").addEventListener("click", () => {
-  detailsPane.classList.toggle("hidden");
-  if (detailsPane.classList.contains("hidden")) {
-    app.style.gridTemplateColumns = gridAppLeft;
-  } else {
     const savedWidth = localStorage.getItem("rightWidth") || "340px";
     app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
   }
-});*/
+  window.addEventListener("mouseup", () => {
+    if (!isResizing) return;
+    document.body.style.userSelect = "";
+    isResizing = false;
+
+    if (!detailsPane.classList.contains("hidden")) {
+      const cols = app.style.gridTemplateColumns.split(" ");
+      localStorage.setItem("rightWidth", cols.pop());
+    }
+  });
+
+  // Restore saved width
+  window.addEventListener("load", () => {
+    const savedWidth = localStorage.getItem("rightWidth");
+    if (savedWidth) {
+      app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
+    }
+  });
+
+  // Toggle button
+  /*document.getElementById("toggle-details").addEventListener("click", () => {
+    detailsPane.classList.toggle("hidden");
+    if (detailsPane.classList.contains("hidden")) {
+      app.style.gridTemplateColumns = gridAppLeft;
+    } else {
+      const savedWidth = localStorage.getItem("rightWidth") || "340px";
+      app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
+    }
+  });*/
 });
 

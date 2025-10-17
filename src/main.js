@@ -241,12 +241,14 @@ async function pasteFiles() {
   console.log("paste files:", op);
 }
 // ==== Helper placeholders ====
-async function getSelectedPaths() {
+function getSelectedPaths() {
   // this var is accessible from global scope 
   // container = document.querySelector("#file-list");
   // get all div with class .selected
   // direct children of container.
-  let a = container.querySelectorAll('.selected')
+  let a = document.querySelectorAll('.selected')
+  console.log(a)
+  console.log(Array.from(a).map((x) => x.getAttribute('data-path')))
   return Array.from(a).map((x) => x.getAttribute('data-path'));
 }
 async function copyPathToClipboard(paths) {
@@ -349,7 +351,6 @@ const actionFuncs = {
   symlink: () => { op = { type: "symlink", paths: getSelectedPaths() }; },
   hardlink: () => { op = { type: "hardlink", paths: getSelectedPaths() }; },
   "copy-path": () => copyPathToClipboard(getSelectedPaths()),
-  "add-favourite": () => addFavourite(getSelectedPaths()),
   "read-only": () => setReadonly(getSelectedPaths(), true),
   "read-write": () => setReadonly(getSelectedPaths(), false),
   "new-folder": () => createNewFolder(),
@@ -372,6 +373,11 @@ const actionFuncs = {
   "script-8": () => runUserScript(8, getSelectedPaths()),
   "script-9": () => runUserScript(9, getSelectedPaths()),
   "edit-config-file": () => editConfigFile(),
+  back: () => previousDir(),
+  forward: () => nextDir(),
+  refresh: () => f5(),
+  up: () => parentDir(),
+  "add-favourite": () => toggleFavourite(getSelectedPaths()),
 };
 
 // ==== FAVOURITES ====
@@ -388,22 +394,22 @@ async function renderFavourites(drives) {
   let container2 = document.querySelector("#favourites");
   container2.innerHTML = "";
   drives.forEach((drive, idx) => {
-    const item = document.createElement("div");
+    let item = document.createElement("div");
     item.classList.add("file-item");
+    item.dataset.index = idx;
+    item.dataset.name = drive.name;
+    item.dataset.path = drive.path;
+    // 🎨 Choose icon based on type
+    let icon = document.createElement("span");
+    icon.style.fontSize = "2em";
     switch (drive.type) {
-      case 0:
-        item.textContent = `💽`
-        break;
-      case 1:
-        item.textContent = `📝`
-        break;
-      case 2:
-        item.textContent = `📁`
-        break;
+      case 0: icon.textContent = "💽"; break;
+      case 1: icon.textContent = "📝"; break;
+      case 2: icon.textContent = "📁"; break;
+      default: icon.textContent = "📦";
     }
-
+    item.append(icon)
     item.textContent += `${drive.name}`;
-    container2.appendChild(item);
     let file = {name: drive.name, path: drive.path}
     attachSelectionHandler(item, file, idx, container);
 
@@ -421,6 +427,7 @@ async function renderFavourites(drives) {
         showError(`Cannot open ${file.path}: ${err}`);
       }
     });
+    container2.appendChild(item);
   });
 }
 
@@ -450,11 +457,15 @@ async function loadFavourites() {
 }
 
 // 🟡 Add new favourites (paths[] = array of strings)
-async function addFavourite(paths) {
-  if (!paths?.length) return;
+async function toggleFavourite(paths) {
+  console.log(paths)
+  console.log("paths =", paths, "type =", typeof paths, "length =", paths?.length);
+  if (paths == null) return;
   let changed = false;
 
   paths.forEach(path => {
+    if (path == null) return
+    console.log(path)
     // Avoid duplicates
     if (!mockDrives.some(d => d.path === path)) {
       const type = path.endsWith("\\") || path.endsWith("/") ? 0 : 2; // guess type: drive(0) or folder(2)
@@ -465,12 +476,12 @@ async function addFavourite(paths) {
   });
 
   if (changed) {
-    saveFavourites();
-    renderFavourites(mockDrives);
     console.log("⭐ Added favourites:", paths);
   } else {
-    console.log("⚠️ Already in favourites:", paths);
+    paths.forEach(path => {removeFavourite(path)}) 
   }
+  saveFavourites();
+  renderFavourites(mockDrives);
 }
 
 // 🗑️ Remove a favourite by path
@@ -478,54 +489,49 @@ async function removeFavourite(path) {
   const index = mockDrives.findIndex(d => d.path === path);
   if (index >= 0) {
     mockDrives.splice(index, 1);
-    saveFavourites();
-    renderFavourites(mockDrives);
     console.log("🗑️ Removed favourite:", path);
   }
 }
 
-console.log(container);
 loadFavourites();   // <=== load them right away
 listDrives(); // automatically list drives on load
 // ---------- RIGHT PANEL: commands + placeholders ----------
 
 // ==== Event binding ====
-document.querySelectorAll("#actions a").forEach(item => {
-  const id = item.id;
-  item.classList.add("action");
+// ==== Event binding ====
+function bindActionButtons(selector) {
+  document.querySelectorAll(`${selector} a`).forEach(item => {
+    const id = item.id;
 
-  item.addEventListener("mouseup", () => {
-    item.classList.remove("selected")
-    console.log("remove classlist")
-  });
-  item.addEventListener("mousedown", e => {
-    e.preventDefault();
-    document.querySelectorAll(".action").forEach(el => el.classList.remove("selected"));
-    item.classList.add("selected");
+    // Remove selection on mouseup
+    item.addEventListener("mouseup", () => {
+      item.classList.remove("selected");
+      //console.log(`[${selector}] mouseup → removed class "selected"`);
+    });
 
-    const func = actionFuncs[id];
-    if (func) func();
-    else console.warn("No action function defined for:", id);
+    // Trigger action on mousedown
+    item.addEventListener("mousedown", e => {
+      e.preventDefault();
+
+      // Remove "selected" from all other buttons in this group
+      document.querySelectorAll(`${selector} a`).forEach(el => el.classList.remove("selected"));
+      item.classList.add("selected");
+
+      const func = actionFuncs[id];
+      if (func) func();
+      else console.warn(`No action function defined for: ${id}`);
+    });
   });
-});
-// wire checkbox / radio interactions as simple placeholders
+}
+
+// Apply to both action areas
+bindActionButtons("#actions");
+bindActionButtons("#toolbar");
+
+// wire checkbox / radio interactions as simple placeholders --- useless for now
 document.querySelectorAll("#commands-pane input[type='checkbox'], #commands-pane input[type='radio']").forEach(el => {
   el.addEventListener("change", (e) => {
     console.log(`UI option changed: ${e.target.id || e.target.name} -> ${e.target.checked || e.target.value}`);
-  });
-});
-// wire the 8 static command buttons to placeholderCommand()
-document.querySelectorAll(".cmd-action-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const key = btn.dataset.cmd; // name, type, size, modified, added, width, height, length
-    placeholderCommand(key);
-  });
-});
-// Handle command clicks
-document.querySelectorAll("#commands-list li").forEach(cmd => {
-  cmd.addEventListener("click", () => {
-    console.log(`Command triggered: ${cmd.dataset.command}`);
-    placeholderCommand(cmd.dataset.command);
   });
 });
 const divider = document.getElementById("divider");

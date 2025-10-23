@@ -10,22 +10,26 @@
 </head>
 
 <body>
-  <div id="app">
-    <s id="sidebar">
-      <div id="toolbar">
-        <a id="back">⬅</a>
-        <a id="forward">➡</a>
-        <a id="refresh">🔁</a>
-        <a id="up">⬆</a>
-        <a id="add-favourite">📌</a>
-      </div>
-      <div id="favourites"></div>
-      <div class="commands-header">
-        <h3>Shortcuts</h3>
-      </div>
-      <div class="commands-section">
-        <h4>Keybindings & Operations</h4>
-        <pre class="kb-block" id="kb-block">
+  <div id="VScodeVeryLeftPane">
+    <img src="star.png" />
+    <img src="history.png" />
+    <img src="search.png" />
+  </div>
+  <s id="LeftPane">
+    <div id="toolbar">
+      <a id="back">⬅</a>
+      <a id="forward">➡</a>
+      <a id="refresh">🔁</a>
+      <a id="up">⬆</a>
+      <a id="add-favourite">📌</a>
+    </div>
+    <div id="favourites"></div>
+    <div class="commands-header">
+      <h3>Shortcuts</h3>
+    </div>
+    <div class="commands-section">
+      <h4>Keybindings & Operations</h4>
+      <pre class="kb-block" id="kb-block">
 =   toogle this menu
 ctrl + =   toogle details & actions menu
 [Return] Parent folder
@@ -76,86 +80,85 @@ F2 rename
 ctrl + Tab cycle view mode
 ctrl + S cycle sorting mode
         </pre>
-      </div>
-    </s>
-    <main id="main">
-      <div id="preview">
-        <div id="file-list"></div>
-      </div>
-    </main>
-  <div id="divider"></div>
-    <s id="right-column">
-        <div id="splitted">
-          <div id="options">
-            <h4>View</h4>
-            <div class="details-controls">
-              <label><input type="radio" name="view" value="icons" checked>💟icons</label>
-              <label><input type="radio" name="view" value="details">📊Details</label>
-              <label><input type="radio" name="view" value="compact">📕Compact List</label>
-            </div>
-            <h4>Options</h4>
-            <div class="details-options">
-              <label><input type="checkbox" id="opt-hidden"> Hidden items</label>
-              <label><input type="checkbox" id="opt-checkboxes"> Item check boxes</label>
-              <label><input type="checkbox" id="opt-osfolders"> OS Folders</label>
-              <label><input type="checkbox" id="opt-songlen"> Get song Length</label>
-              <label><input type="checkbox" id="opt-imgwh"> Get Image w × h</label>
-            </div>
-            <div class="commands-section">
-              <h4>Sorting</h4>
-              <div class="list">
-                <label><input type="radio" name="sort" value="name" checked>🅰 name</label>
-                <label><input type="radio" name="sort" value="type">📚 type</label>
-                <label><input type="radio" name="sort" value="size">💾 size</label>
-                <label><input type="radio" name="sort" value="date-modified">📆 date modified</label>
-                <label><input type="radio" name="sort" value="date-added">📅 date added</label>
-                <label><input type="radio" name="sort" value="pic-width">↔ picture width</label>
-                <label><input type="radio" name="sort" value="pic-height">↕ picture height</label>
-                <label><input type="radio" name="sort" value="song-length">🎵 song length</label>
-              </div>
-            </div>
-            <h4>Preview</h4>
-            <div class="list">
-              <label><input type="radio" name="show" value="name-only"> Show only name</label>
-              <label><input type="radio" name="show" value="previews" checked> Show Previews</label>
-              <label><input type="radio" name="show" value="fullpics"> SHOW FULL PICS I LOVE USING RAM</label>
-            </div>
-          </div>
-          <div id="actions" class="list">
-            <a id="copy">📝Copy</a>
-            <a id="cut">✂ Cut</a>
-            <a id="paste">📋 Paste</a>
-            <a id="symlink">📎 Symlink</a>
-            <a id="hardlink">📍 Hardlink</a>
-            <a id="copy-path">📏 Copy path</a>
-            <a id="read-only">✅ Add read-only</a>
-            <a id="read-write">❎ Rm read-only</a>
-            <a id="new-folder">📁 New folder</a>
-            <a id="new-file">📃 New file</a>
-            <a id="move-to-bin">🗑 Move to bin</a>
-            <a id="delete-forever">❌ Delete forever</a>
-            <a id="select-all">📰 Select All</a>
-            <a id="select-none">📰 Select None</a>
-            <a id="invert-selection">📰 Invert selection</a>
-            <a id="open">📖 Open</a>
-            <a id="edit">📕 Edit</a>
-            <a id="history">📚 History</a>
-            <a id="script-1">📰 Script 1</a>
-            <a id="script-2">📰 Script 2</a>
-            <a id="script-3">📰 Script 3</a>
-            <a id="script-4">📰 Script 4</a>
-            <a id="script-5">📰 Script 5</a>
-            <a id="script-6">📰 Script 6</a>
-            <a id="script-7">📰 Script 7</a>
-            <a id="script-8">📰 Script 8</a>
-            <a id="script-9">📰 Script 9</a>
-            <a id="edit-config-file">📰 Edit config file</a>
+    </div>
+  </s>
+  <div id="resizeLeftPane"></div>
+  <main id="mainPane">
+    <div id="preview">
+      <div id="file-list"></div>
+    </div>
+  </main>
+  <div id="resizeRightPane"></div>
+  <s id="RightPane">
+    <div id="splitted">
+      <div id="options">
+        <h4>View</h4>
+        <div class="details-controls">
+          <label><input type="radio" name="view" value="icons" checked>💟icons</label>
+          <label><input type="radio" name="view" value="details">📊Details</label>
+          <label><input type="radio" name="view" value="compact">📕Compact List</label>
+        </div>
+        <h4>Options</h4>
+        <div class="details-options">
+          <label><input type="checkbox" id="opt-hidden"> Hidden items</label>
+          <label><input type="checkbox" id="opt-checkboxes"> Item check boxes</label>
+          <label><input type="checkbox" id="opt-osfolders"> OS Folders</label>
+          <label><input type="checkbox" id="opt-songlen"> Get song Length</label>
+          <label><input type="checkbox" id="opt-imgwh"> Get Image w × h</label>
+        </div>
+        <div class="commands-section">
+          <h4>Sorting</h4>
+          <div class="list">
+            <label><input type="radio" name="sort" value="name" checked>🅰 name</label>
+            <label><input type="radio" name="sort" value="type">📚 type</label>
+            <label><input type="radio" name="sort" value="size">💾 size</label>
+            <label><input type="radio" name="sort" value="date-modified">📆 date modified</label>
+            <label><input type="radio" name="sort" value="date-added">📅 date added</label>
+            <label><input type="radio" name="sort" value="pic-width">↔ picture width</label>
+            <label><input type="radio" name="sort" value="pic-height">↕ picture height</label>
+            <label><input type="radio" name="sort" value="song-length">🎵 song length</label>
           </div>
         </div>
+        <h4>Preview</h4>
+        <div class="list">
+          <label><input type="radio" name="show" value="name-only"> Show only name</label>
+          <label><input type="radio" name="show" value="previews" checked> Show Previews</label>
+          <label><input type="radio" name="show" value="fullpics"> SHOW FULL PICS I LOVE USING RAM</label>
+        </div>
       </div>
-    </s>
-  </div>
-  <button id="restore-button" class="restore-button hidden">▶</button>
+      <div id="actions" class="list">
+        <a id="copy">📝Copy</a>
+        <a id="cut">✂ Cut</a>
+        <a id="paste">📋 Paste</a>
+        <a id="symlink">📎 Symlink</a>
+        <a id="hardlink">📍 Hardlink</a>
+        <a id="copy-path">📏 Copy path</a>
+        <a id="read-only">✅ Add read-only</a>
+        <a id="read-write">❎ Rm read-only</a>
+        <a id="new-folder">📁 New folder</a>
+        <a id="new-file">📃 New file</a>
+        <a id="move-to-bin">🗑 Move to bin</a>
+        <a id="delete-forever">❌ Delete forever</a>
+        <a id="select-all">📰 Select All</a>
+        <a id="select-none">📰 Select None</a>
+        <a id="invert-selection">📰 Invert selection</a>
+        <a id="open">📖 Open</a>
+        <a id="edit">📕 Edit</a>
+        <a id="history">📚 History</a>
+        <a id="script-1">📰 Script 1</a>
+        <a id="script-2">📰 Script 2</a>
+        <a id="script-3">📰 Script 3</a>
+        <a id="script-4">📰 Script 4</a>
+        <a id="script-5">📰 Script 5</a>
+        <a id="script-6">📰 Script 6</a>
+        <a id="script-7">📰 Script 7</a>
+        <a id="script-8">📰 Script 8</a>
+        <a id="script-9">📰 Script 9</a>
+        <a id="edit-config-file">📰 Edit config file</a>
+      </div>
+    </div>
+  </s>
+  <button class="RestoreRightPane hidden">▶</button>
 </body>
 
 </html>

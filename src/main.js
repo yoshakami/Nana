@@ -410,7 +410,7 @@ async function renderFavourites(drives) {
     }
     item.append(icon)
     item.textContent += `${drive.name}`;
-    let file = {name: drive.name, path: drive.path}
+    let file = { name: drive.name, path: drive.path }
     attachSelectionHandler(item, file, idx, container);
 
     // double-click to open directories
@@ -478,7 +478,7 @@ async function toggleFavourite(paths) {
   if (changed) {
     console.log("⭐ Added favourites:", paths);
   } else {
-    paths.forEach(path => {removeFavourite(path)}) 
+    paths.forEach(path => { removeFavourite(path) })
   }
   saveFavourites();
   renderFavourites(mockDrives);
@@ -551,20 +551,7 @@ divider.addEventListener("mousedown", (e) => {
 });
 const gridAppLeft = "240px 1fr"
 const gridAppGap = "8px"
-window.addEventListener("mousemove", (e) => {
-  if (!isResizing) return;
-  const newWidth = startWidth + startX - e.clientX;
 
-  if (newWidth < 340) {
-    detailsPane.classList.add("hidden");
-    restoreBtn.classList.remove("hidden");
-    app.style.gridTemplateColumns = gridAppLeft; // collapse layout
-  } else {
-    detailsPane.classList.remove("hidden");
-    restoreBtn.classList.add("hidden");
-    app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${newWidth}px`;
-  }
-});
 // The restore button (the floating tab)
 restoreBtn.addEventListener("click", showDetails);
 // When showing the details pane
@@ -575,22 +562,118 @@ async function showDetails() {
   const savedWidth = localStorage.getItem("rightWidth") || "340px";
   app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
 }
-window.addEventListener("mouseup", () => {
+// =============================
+// Nana File Explorer UI Script
+// =============================
+
+// Everything runs after the DOM is ready
+
+
+// === Element references ===
+const body = document.body;
+const leftPane = document.querySelector("#LeftPane");
+const rightPane = document.querySelector("#RightPane");
+const resizeLeft = document.querySelector("#resizeLeftPane");
+const resizeRight = document.querySelector("#resizeRightPane");
+const restoreButton = document.querySelector(".RestoreRightPane");
+const vscodePaneWidth = 50; // fixed width of #VScodeVeryLeftPane
+
+// === Config ===
+const MIN_WIDTH = 100;
+const MAX_WIDTH = 600;
+
+// === Helper ===
+const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+
+// ================================
+// ========== RESIZING ============
+// ================================
+
+let activeSide = null; // "left" or "right"
+
+function startResize(e, side) {
+  e.preventDefault();
+  isResizing = true;
+  activeSide = side;
+  body.style.cursor = "col-resize";
+  body.style.userSelect = "none";
+}
+
+function stopResize() {
   if (!isResizing) return;
-  document.body.style.userSelect = "";
   isResizing = false;
+  activeSide = null;
+  body.style.cursor = "";
+  body.style.userSelect = "";
+}
 
-  if (!detailsPane.classList.contains("hidden")) {
-    const cols = app.style.gridTemplateColumns.split(" ");
-    localStorage.setItem("rightWidth", cols.pop());
+function onMouseMove(e) {
+  if (!isResizing) return;
+
+  const rect = body.getBoundingClientRect();
+
+  if (activeSide === "left") {
+    const newWidth = clamp(e.clientX - rect.left - vscodePaneWidth, MIN_WIDTH, MAX_WIDTH);
+    leftPane.style.width = `${newWidth}px`;
+  }
+
+  if (activeSide === "right") {
+    const newWidth = clamp(rect.right - e.clientX, MIN_WIDTH, MAX_WIDTH);
+    rightPane.style.width = `${newWidth}px`;
+  }
+}
+
+// === Event bindings for resizing ===
+resizeLeft.addEventListener("mousedown", e => startResize(e, "left"));
+resizeRight.addEventListener("mousedown", e => startResize(e, "right"));
+window.addEventListener("mousemove", onMouseMove);
+window.addEventListener("mouseup", stopResize);
+
+// ================================
+// === COLLAPSE / RESTORE RIGHT ===
+// ================================
+
+let rightPaneVisible = true;
+const savedWidth = rightPane.style.width || "250px";
+
+function toggleRightPane() {
+  if (rightPaneVisible) {
+    // Hide
+    rightPane.style.width = "0";
+    rightPane.style.opacity = "0";
+    restoreButton.classList.remove("hidden");
+    rightPaneVisible = false;
+  } else {
+    // Restore
+    rightPane.style.width = savedWidth;
+    rightPane.style.opacity = "1";
+    restoreButton.classList.add("hidden");
+    rightPaneVisible = true;
+  }
+}
+
+restoreButton.addEventListener("click", toggleRightPane);
+
+// Example keyboard toggle (optional)
+// Press Ctrl+= to toggle right pane visibility
+window.addEventListener("keydown", e => {
+  if (e.ctrlKey && e.key === "=") {
+    e.preventDefault();
+    toggleRightPane();
   }
 });
 
-// Restore saved width
-window.addEventListener("load", () => {
-  const savedWidth = localStorage.getItem("rightWidth");
-  if (savedWidth) {
-    app.style.gridTemplateColumns = `${gridAppLeft} ${gridAppGap} ${savedWidth}`;
-  }
+// ================================
+// === OPTIONAL: SAVE SIZES ===
+// ================================
+window.addEventListener("beforeunload", () => {
+  localStorage.setItem("LeftPaneWidth", leftPane.style.width);
+  localStorage.setItem("RightPaneWidth", rightPane.style.width);
 });
+
+const lw = localStorage.getItem("LeftPaneWidth");
+const rw = localStorage.getItem("RightPaneWidth");
+if (lw) leftPane.style.width = lw;
+if (rw) rightPane.style.width = rw;
+
 
